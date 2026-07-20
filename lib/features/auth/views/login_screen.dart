@@ -35,7 +35,9 @@ class _LoginScreenState extends State<LoginScreen> {
               width: 300,
               height: 300,
               decoration: BoxDecoration(
-                color: const Color(0xFFA1F4C8).withValues(alpha: 0.3), // primary-fixed
+                color: const Color(
+                  0xFFA1F4C8,
+                ).withValues(alpha: 0.3), // primary-fixed
                 shape: BoxShape.circle,
               ),
             ),
@@ -47,7 +49,9 @@ class _LoginScreenState extends State<LoginScreen> {
               width: 300,
               height: 300,
               decoration: BoxDecoration(
-                color: const Color(0xFFB3EBFF).withValues(alpha: 0.3), // secondary-fixed
+                color: const Color(
+                  0xFFB3EBFF,
+                ).withValues(alpha: 0.3), // secondary-fixed
                 shape: BoxShape.circle,
               ),
             ),
@@ -66,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       constraints: const BoxConstraints(maxWidth: 480),
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.85),
+                        color: Colors.white.withValues(alpha: .85),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: AppColors.onSurface.withValues(alpha: 0.05),
@@ -118,7 +122,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary.withValues(alpha: 0.7),
+                              color: AppColors.textSecondary.withValues(
+                                alpha: .7,
+                              ),
                               letterSpacing: 1.5,
                             ),
                           ),
@@ -175,23 +181,31 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               Expanded(
                                 child: Divider(
-                                  color: AppColors.textSecondary.withValues(alpha: 0.2),
+                                  color: AppColors.textSecondary.withValues(
+                                    alpha: 0.2,
+                                  ),
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 child: Text(
                                   'OR',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.textSecondary.withValues(alpha: 0.5),
+                                    color: AppColors.textSecondary.withValues(
+                                      alpha: 0.5,
+                                    ),
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                               Expanded(
                                 child: Divider(
-                                  color: AppColors.textSecondary.withValues(alpha: 0.2),
+                                  color: AppColors.textSecondary.withValues(
+                                    alpha: 0.2,
+                                  ),
                                 ),
                               ),
                             ],
@@ -204,9 +218,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             backgroundColor: AppColors.surface,
                             textColor: AppColors.textPrimary,
                             icon: Image.network(
-                              'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png',
-                              width: 20,
-                              height: 20,
+                              'https://img.icons8.com/color/48/000000/google-logo.png',
+                              width: 24,
+                              height: 24,
                             ),
                             onPressed: () {
                               // TODO: Implement Google Login
@@ -246,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          
+
           // Footer Component
           Positioned(
             bottom: 16,
@@ -256,7 +270,10 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 RichText(
                   text: const TextSpan(
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                     children: [
                       TextSpan(
                         text: 'EcoVolt AI ',

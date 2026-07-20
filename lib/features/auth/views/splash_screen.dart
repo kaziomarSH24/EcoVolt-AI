@@ -1,8 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
+import 'package:ecovolt_ai/features/auth/views/login_screen.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _navigateToNext();
+  }
+
+  Future<void> _navigateToNext() async {
+    // Wait for the animation to finish (1.5s) + a little extra pause (1s) = 2.5s total
+    await Future.delayed(const Duration(milliseconds: 2500));
+    
+    if (!mounted) return;
+    
+    // Navigate to Login Screen and remove Splash Screen from memory
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
