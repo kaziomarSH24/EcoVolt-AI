@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../features/auth/views/splash_screen.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/signup_screen.dart';
+import '../../features/home/views/home_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -25,7 +26,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const PlaceholderScreen(title: 'Home Screen'),
+        builder: (context, state) => const HomeScreen(),
       ),
     ],
   );

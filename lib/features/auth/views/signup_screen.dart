@@ -33,9 +33,7 @@ class _SignupScreenState extends State<SignupScreen> {
     // Validate returns true if the form is valid, otherwise false.
     if (_formKey.currentState!.validate()) {
       // If valid, proceed with sign up logic
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Processing Registration...')),
-      );
+      context.go('/home');
     }
   }
 

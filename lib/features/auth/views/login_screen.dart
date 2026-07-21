@@ -26,9 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   //handle login
   void _handleLogin(){
     if(_formKey.currentState!.validate()){
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Processing Login...')),  
-      );
+      context.go('/home');
     }
   }
 
