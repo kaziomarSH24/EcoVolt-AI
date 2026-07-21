@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(16.0), // Reduced from 24
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       width: double.infinity,
                       constraints: const BoxConstraints(maxWidth: 480),
-                      padding: const EdgeInsets.all(32),
+                      padding: const EdgeInsets.all(28), // Reduced from 32
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: .85),
                         borderRadius: BorderRadius.circular(16),
@@ -87,38 +87,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           // Top Section: Brand & Title
-                          Container(
-                            width: 64,
-                            height: 64,
-                            decoration: const BoxDecoration(
-                              color: AppColors.primaryContainer,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Color(0x330B6947), // 20% opacity
-                                  blurRadius: 20,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.bolt,
-                              color: AppColors.onPrimaryContainer,
-                              size: 32,
-                            ),
+                          Image.asset(
+                            'assets/images/logo.png',
+                            height: 100, // Reduced from 140
                           ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'EcoVolt AI',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           Text(
-                            'DEVELOPED BY TEAM IGNITEX',
+                            'Intelligent Power Solutions',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -128,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               letterSpacing: 1.5,
                             ),
                           ),
-                          const SizedBox(height: 48),
+                          const SizedBox(height: 42),
 
                           // Login Form
                           CustomTextField(
@@ -162,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16), // Reduced from 24
                           CustomButton(
                             text: 'Login',
                             icon: const Icon(
@@ -174,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               // TODO: Implement Login Logic
                             },
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16), // Reduced from 24
 
                           // Divider
                           Row(
@@ -210,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16), // Reduced from 24
 
                           // Google Login Button
                           CustomButton(
@@ -226,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               // TODO: Implement Google Login
                             },
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16), // Reduced from 24
 
                           // Sign up text
                           Row(
@@ -255,65 +230,60 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 24),
+                    // Footer Component
+                    Column(
+                      children: [
+                        RichText(
+                          text: const TextSpan(
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'EcoVolt AI ',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextSpan(text: '© 2024 Developed by Team IgniteX'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            GestureDetector(
+                              onTap: () {},
+                              child: const Text(
+                                'Privacy Policy',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            GestureDetector(
+                              onTap: () {},
+                              child: const Text(
+                                'Terms of Service',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-            ),
-          ),
-
-          // Footer Component
-          Positioned(
-            bottom: 16,
-            left: 0,
-            right: 0,
-            child: Column(
-              children: [
-                RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: 'EcoVolt AI ',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextSpan(text: '© 2024 Developed by Team IgniteX'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: () {},
-                      child: const Text(
-                        'Privacy Policy',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    GestureDetector(
-                      onTap: () {},
-                      child: const Text(
-                        'Terms of Service',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ),
           ),
         ],

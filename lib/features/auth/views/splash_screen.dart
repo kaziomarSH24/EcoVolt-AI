@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
-import 'package:ecovolt_ai/features/auth/views/login_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -22,11 +22,8 @@ class _SplashScreenState extends State<SplashScreen> {
     
     if (!mounted) return;
     
-    // Navigate to Login Screen and remove Splash Screen from memory
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
+    // Navigate to Login Screen using GoRouter
+    context.go('/login');
   }
 
   @override
