@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -37,7 +38,7 @@ class HomeScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildHeroSection(),
-                        _buildCategoriesSection(),
+                        _buildCategoriesSection(context),
                         const SizedBox(height: 32),
                         _buildPopularProductsSection(),
                         const SizedBox(height: 120), // padding for bottom nav
@@ -101,7 +102,7 @@ class HomeScreen extends StatelessWidget {
               const CircleAvatar(
                 radius: 18,
                 backgroundColor: AppColors.surface,
-                backgroundImage: AssetImage('assets/images/ev3.png'), // using a placeholder image for avatar
+                backgroundImage: AssetImage('assets/images/avatar.jpg'),
               ),
             ],
           )
@@ -181,7 +182,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoriesSection() {
+  Widget _buildCategoriesSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -199,12 +200,15 @@ class HomeScreen extends StatelessWidget {
                   letterSpacing: -0.5,
                 ),
               ),
-              Text(
-                'See All',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+              GestureDetector(
+                onTap: () => context.push('/catalog'),
+                child: const Text(
+                  'See All',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
             ],
