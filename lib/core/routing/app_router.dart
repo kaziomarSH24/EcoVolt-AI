@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 // Import your existing screens
 import '../../features/auth/views/splash_screen.dart';
 import '../../features/auth/views/login_screen.dart';
+import '../../features/auth/views/signup_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -17,6 +18,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/signup',
+        builder: (context, state) => const SignupScreen(),
       ),
       GoRoute(
         path: '/home',

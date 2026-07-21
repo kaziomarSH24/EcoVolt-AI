@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/core/widgets/custom_button.dart';
 import 'package:ecovolt_ai/core/widgets/custom_text_field.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -215,7 +216,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                               GestureDetector(
-                                onTap: () {},
+                                onTap: () {
+                                  context.push('/signup');
+                                },
                                 child: const Text(
                                   'Sign up',
                                   style: TextStyle(
