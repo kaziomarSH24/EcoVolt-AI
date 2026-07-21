@@ -128,6 +128,12 @@ class _SignupScreenState extends State<SignupScreen> {
                               hintText: 'John Doe',
                               controller: _nameController,
                               prefixIcon: const Icon(Icons.person_outline),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Name is required';
+                                }
+                                return null;
+                              },
                             ),
                             const SizedBox(height: 16),
 
@@ -138,6 +144,15 @@ class _SignupScreenState extends State<SignupScreen> {
                               controller: _emailController,
                               prefixIcon: const Icon(Icons.mail_outline),
                               keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Email is required';
+                                }
+                                if (!value.contains('@') || !value.contains('.')) {
+                                  return 'Please enter a valid email';
+                                }
+                                return null;
+                              },
                             ),
                             const SizedBox(height: 16),
 
@@ -148,6 +163,15 @@ class _SignupScreenState extends State<SignupScreen> {
                               controller: _passwordController,
                               isPassword: true,
                               prefixIcon: const Icon(Icons.lock_outline),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Password is required';
+                                }
+                                if (value.length < 6) {
+                                  return 'Password must be at least 6 characters';
+                                }
+                                return null;
+                              },
                             ),
                             const SizedBox(height: 16),
 
@@ -158,6 +182,15 @@ class _SignupScreenState extends State<SignupScreen> {
                               controller: _confirmPasswordController,
                               isPassword: true,
                               prefixIcon: const Icon(Icons.lock_outline),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please confirm your password';
+                                }
+                                if (value != _passwordController.text) {
+                                  return 'Passwords do not match';
+                                }
+                                return null;
+                              },
                             ),
                             const SizedBox(height: 32),
 

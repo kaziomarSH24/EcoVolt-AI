@@ -12,6 +12,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  //for form validation
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -20,6 +22,14 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+  //handle login
+  void _handleLogin(){
+    if(_formKey.currentState!.validate()){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Processing Login...')),  
+      );
+    }
   }
 
   @override
@@ -84,9 +94,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
                           // Top Section: Brand & Title
                           Image.asset(
                             'assets/images/logo.png',
@@ -113,6 +125,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _emailController,
                             prefixIcon: const Icon(Icons.mail_outline),
                             keyboardType: TextInputType.emailAddress,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Email is required';
+                              }
+                              if (!value.contains('@') || !value.contains('.')) {
+                                return 'Please enter a valid email';
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 16),
                           CustomTextField(
@@ -120,6 +141,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             hintText: '••••••••',
                             controller: _passwordController,
                             isPassword: true,
+                            validator: (value){
+                              if(value == null || value.trim().isEmpty){
+                                return 'Password is required';
+                              }
+                              return null;
+                            },
                             prefixIcon: const Icon(Icons.lock_outline),
                             labelSuffix: TextButton(
                               onPressed: () {},
@@ -128,6 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
+                              
                               child: const Text(
                                 'Forgot password?',
                                 style: TextStyle(
@@ -146,9 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               size: 18,
                               color: Colors.white,
                             ),
-                            onPressed: () {
-                              // TODO: Implement Login Logic
-                            },
+                            onPressed: _handleLogin,
                           ),
                           const SizedBox(height: 16), // Reduced from 24
 
@@ -233,7 +259,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                  ),
+                  const SizedBox(height: 24),
                     // Footer Component
                     Column(
                       children: [
