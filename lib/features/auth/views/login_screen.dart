@@ -123,15 +123,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _emailController,
                             prefixIcon: const Icon(Icons.mail_outline),
                             keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Email is required';
-                              }
-                              if (!value.contains('@') || !value.contains('.')) {
-                                return 'Please enter a valid email';
-                              }
-                              return null;
-                            },
+                            // validator: (value) {
+                            //   if (value == null || value.trim().isEmpty) {
+                            //     return 'Email is required';
+                            //   }
+                            //   if (!value.contains('@') || !value.contains('.')) {
+                            //     return 'Please enter a valid email';
+                            //   }
+                            //   return null;
+                            // },
                           ),
                           const SizedBox(height: 16),
                           CustomTextField(
@@ -139,12 +139,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             hintText: '••••••••',
                             controller: _passwordController,
                             isPassword: true,
-                            validator: (value){
-                              if(value == null || value.trim().isEmpty){
-                                return 'Password is required';
-                              }
-                              return null;
-                            },
+                            // validator: (value){
+                            //   if(value == null || value.trim().isEmpty){
+                            //     return 'Password is required';
+                            //   }
+                            //   return null;
+                            // },
                             prefixIcon: const Icon(Icons.lock_outline),
                             labelSuffix: TextButton(
                               onPressed: () {},

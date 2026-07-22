@@ -9,6 +9,7 @@ import '../../features/auth/views/signup_screen.dart';
 import '../../features/home/views/home_screen.dart';
 import 'package:ecovolt_ai/features/shop/views/product_catalog_screen.dart';
 import 'package:ecovolt_ai/features/shop/views/categories_screen.dart';
+import 'package:ecovolt_ai/features/shop/views/product_details_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -37,6 +38,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/categories',
         builder: (context, state) => const CategoriesScreen(),
+      ),
+      GoRoute(
+        path: '/product-details',
+        builder: (context, state) {
+          final product = state.extra as Map<String, dynamic>;
+          return ProductDetailsScreen(product: product);
+        },
       ),
     ],
   );

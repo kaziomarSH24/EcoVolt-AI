@@ -396,9 +396,18 @@ class _PremiumProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 220,
-      decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: () {
+        context.push('/product-details', extra: {
+          'title': title,
+          'price': price,
+          'imagePath': imagePath,
+          'isBestSeller': tag == 'Best Seller',
+        });
+      },
+      child: Container(
+        width: 220,
+        decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
@@ -425,7 +434,7 @@ class _PremiumProductCard extends StatelessWidget {
               children: [
                 Center(
                   child: Hero(
-                    tag: title,
+                    tag: 'catalog_$title',
                     child: Image.asset(imagePath, fit: BoxFit.contain),
                   ),
                 ),
@@ -519,6 +528,7 @@ class _PremiumProductCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
