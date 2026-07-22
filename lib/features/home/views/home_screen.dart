@@ -72,12 +72,14 @@ class HomeScreen extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                height: 40,
+                width: 40,
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.bolt, color: AppColors.primary),
+                child: Image.asset('assets/images/sort_logo.png', fit: BoxFit.contain),
               ),
               const SizedBox(width: 12),
               const Text(
@@ -201,7 +203,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               GestureDetector(
-                onTap: () => context.push('/catalog'),
+                onTap: () => context.push('/categories'),
                 child: const Text(
                   'See All',
                   style: TextStyle(
@@ -336,8 +338,10 @@ class _CategoryPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+    return GestureDetector(
+      onTap: () => context.push('/catalog'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
         color: isSelected ? AppColors.primary : Colors.white,
         borderRadius: BorderRadius.circular(30),
@@ -370,6 +374,7 @@ class _CategoryPill extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
