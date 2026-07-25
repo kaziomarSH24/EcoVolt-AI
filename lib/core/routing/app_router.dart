@@ -15,6 +15,11 @@ import 'package:ecovolt_ai/features/checkout/views/checkout_screen.dart';
 import 'package:ecovolt_ai/features/cart/views/cart_screen.dart';
 import 'package:ecovolt_ai/features/profile/views/profile_screen.dart';
 import 'package:ecovolt_ai/features/ai_consultant/views/ai_chat_screen.dart';
+import 'package:ecovolt_ai/features/orders/views/order_history_screen.dart';
+import 'package:ecovolt_ai/features/orders/views/order_tracking_screen.dart';
+import 'package:ecovolt_ai/features/orders/models/order_model.dart';
+import 'package:ecovolt_ai/features/calculator/views/roi_calculator_screen.dart';
+
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
@@ -65,6 +70,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/ai-chat',
         builder: (context, state) => const AiChatScreen(),
+      ),
+      GoRoute(
+        path: '/orders',
+        builder: (context, state) => const OrderHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/order-tracking',
+        builder: (context, state) {
+          final order = state.extra as OrderModel;
+          return OrderTrackingScreen(order: order);
+        },
+      ),
+      GoRoute(
+        path: '/roi-calculator',
+        builder: (context, state) => const RoiCalculatorScreen(),
       ),
     ],
   );

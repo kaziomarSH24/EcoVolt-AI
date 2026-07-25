@@ -192,6 +192,11 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           _buildSettingsTile(icon: Icons.person_outline, title: 'Edit Profile'),
+          _buildSettingsTile(
+            icon: Icons.history_rounded, 
+            title: 'Order History',
+            onTap: () => context.push('/orders'),
+          ),
           _buildSettingsTile(icon: Icons.location_on_outlined, title: 'Shipping Addresses'),
           _buildSettingsTile(icon: Icons.credit_card_outlined, title: 'Payment Methods'),
           
@@ -258,9 +263,10 @@ class ProfileScreen extends StatelessWidget {
     required String title,
     bool hasToggle = false,
     bool toggleValue = false,
+    VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: hasToggle ? null : () {},
+      onTap: hasToggle ? null : (onTap ?? () {}),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Row(
