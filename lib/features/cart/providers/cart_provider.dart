@@ -30,6 +30,19 @@ class CartNotifier extends Notifier<List<CartItem>> {
   int get totalItems {
     return state.fold(0, (sum, item) => sum + item.quantity);
   }
+
+  double get totalPrice {
+    return state.fold(0.0, (sum, item) {
+      // Remove '$' and ',' if they exist, then parse to double
+      final cleanPrice = item.price.replaceAll('\$', '').replaceAll(',', '');
+      final priceValue = double.tryParse(cleanPrice) ?? 0.0;
+      return sum + (priceValue * item.quantity);
+    });
+  }
+
+  void clearCart() {
+    state = [];
+  }
 }
 
 final cartProvider = NotifierProvider<CartNotifier, List<CartItem>>(() {

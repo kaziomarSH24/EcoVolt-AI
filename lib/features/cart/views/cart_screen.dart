@@ -181,7 +181,9 @@ class CartScreen extends ConsumerWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          // TODO: Implement Checkout
+                          if (totalItems > 0) {
+                            context.push('/checkout');
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,

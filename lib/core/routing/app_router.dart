@@ -10,6 +10,7 @@ import '../../features/home/views/home_screen.dart';
 import 'package:ecovolt_ai/features/shop/views/product_catalog_screen.dart';
 import 'package:ecovolt_ai/features/shop/views/categories_screen.dart';
 import 'package:ecovolt_ai/features/shop/views/product_details_screen.dart';
+import 'package:ecovolt_ai/features/checkout/views/checkout_screen.dart';
 import 'package:ecovolt_ai/features/cart/views/cart_screen.dart';
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -45,6 +46,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final product = state.extra as Map<String, dynamic>;
           return ProductDetailsScreen(product: product);
         },
+      ),
+      GoRoute(
+        path: '/checkout',
+        builder: (context, state) => const CheckoutScreen(),
       ),
       GoRoute(
         path: '/cart',
