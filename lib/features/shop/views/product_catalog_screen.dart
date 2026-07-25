@@ -3,6 +3,8 @@ import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ecovolt_ai/features/cart/providers/cart_provider.dart';
+import 'package:ecovolt_ai/features/cart/models/cart_item.dart';
+import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 
 class ProductCatalogScreen extends ConsumerWidget {
   final String categoryName;
@@ -55,7 +57,7 @@ class ProductCatalogScreen extends ConsumerWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.textPrimary),
-              onPressed: () {},
+              onPressed: () => context.push('/cart'),
             ),
             if (totalCartItems > 0)
               Positioned(
@@ -162,7 +164,7 @@ class ProductCatalogScreen extends ConsumerWidget {
   }
 }
 
-class _CatalogProductCard extends StatelessWidget {
+class _CatalogProductCard extends ConsumerWidget {
   final String title;
   final String price;
   final String imagePath;
@@ -176,7 +178,7 @@ class _CatalogProductCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () {
         context.push('/product-details', extra: {
@@ -294,13 +296,33 @@ class _CatalogProductCard extends StatelessWidget {
                           color: AppColors.primary,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
+                      BouncyButton(
+                        onTap: () {
+                          ref.read(cartProvider.notifier).addToCart(
+                            CartItem(
+                              title: title,
+                              price: price,
+                              imagePath: imagePath,
+                            ),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Added to cart'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+                            ],
+                          ),
+                          child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
                         ),
-                        child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
                       ),
                     ],
                   ),

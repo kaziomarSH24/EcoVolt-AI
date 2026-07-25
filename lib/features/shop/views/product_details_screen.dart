@@ -117,35 +117,38 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                 ),
               ],
             ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                AddToCartIcon(
-                  key: cartKey,
-                  icon: const Icon(Icons.shopping_cart_outlined, color: AppColors.textPrimary),
-                  badgeOptions: const BadgeOptions(active: false), // Use Riverpod badge instead
-                ),
-                if (totalCartItems > 0)
-                  Positioned(
-                    right: 4,
-                    top: 4,
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        totalCartItems.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+            child: GestureDetector(
+              onTap: () => context.push('/cart'),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AddToCartIcon(
+                    key: cartKey,
+                    icon: const Icon(Icons.shopping_cart_outlined, color: AppColors.textPrimary),
+                    badgeOptions: const BadgeOptions(active: false), // Use Riverpod badge instead
+                  ),
+                  if (totalCartItems > 0)
+                    Positioned(
+                      right: 4,
+                      top: 4,
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          totalCartItems.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
