@@ -14,6 +14,80 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String selectedPaymentMethod = 'Credit Card';
   bool isProcessing = false;
+  
+  String addressTitle = 'Home';
+  String addressDetails = '123 Eco Street, Green City\nState 12345';
+
+  void _showEditAddressModal() {
+    final titleController = TextEditingController(text: addressTitle);
+    final detailsController = TextEditingController(text: addressDetails);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 24,
+            right: 24,
+            top: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Edit Address',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  labelText: 'Address Title (e.g. Home, Office)',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: detailsController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Full Address',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      addressTitle = titleController.text.isNotEmpty ? titleController.text : 'Home';
+                      addressDetails = detailsController.text.isNotEmpty ? detailsController.text : 'No address provided';
+                    });
+                    context.pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Save Address', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   void _placeOrder() async {
     setState(() {
@@ -235,13 +309,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Home',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary),
+                Text(
+                  addressTitle,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '123 Eco Street, Green City\nState 12345',
+                  addressDetails,
                   style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), height: 1.4),
                 ),
               ],
@@ -249,7 +323,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.edit_rounded, color: AppColors.primary, size: 20),
-            onPressed: () {},
+            onPressed: _showEditAddressModal,
           ),
         ],
       ),

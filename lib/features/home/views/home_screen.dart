@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ecovolt_ai/features/cart/providers/cart_provider.dart';
 import 'package:ecovolt_ai/features/cart/models/cart_item.dart';
 import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
+import 'package:ecovolt_ai/core/widgets/custom_bottom_nav.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -56,10 +57,10 @@ class HomeScreen extends ConsumerWidget {
           
           // Custom Bottom Navigation Bar Floating
           Positioned(
-            bottom: 0,
             left: 0,
             right: 0,
-            child: _buildFloatingBottomNav(context, ref),
+            bottom: 0,
+            child: const CustomBottomNav(currentIndex: 0),
           ),
         ],
       ),
@@ -291,73 +292,6 @@ class HomeScreen extends ConsumerWidget {
       ],
     );
   }
-
-  Widget _buildFloatingBottomNav(BuildContext context, WidgetRef ref) {
-    final cartItems = ref.watch(cartProvider);
-    final totalCartItems = cartItems.fold(0, (sum, item) => sum + item.quantity);
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-      decoration: BoxDecoration(
-        color: AppColors.onPrimary,
-        borderRadius: BorderRadius.circular(40),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const _NavItem(icon: Icons.home_rounded, isSelected: true),
-          GestureDetector(
-            onTap: () => context.push('/cart'),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const _NavItem(icon: Icons.shopping_bag_outlined),
-                if (totalCartItems > 0)
-                  Positioned(
-                    right: -4,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        totalCartItems.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          // AI floating button
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 24),
-          ),
-          _NavItem(icon: Icons.favorite_border_rounded),
-          _NavItem(icon: Icons.person_outline_rounded),
-        ],
-      ),
-    );
-  }
 }
 
 class _CategoryPill extends StatelessWidget {
@@ -584,22 +518,6 @@ class _PremiumProductCard extends ConsumerWidget {
         ],
       ),
     ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final bool isSelected;
-
-  const _NavItem({required this.icon, this.isSelected = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Icon(
-      icon,
-      color: isSelected ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.5),
-      size: 28,
     );
   }
 }
