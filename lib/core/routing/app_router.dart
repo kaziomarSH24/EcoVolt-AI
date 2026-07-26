@@ -19,6 +19,7 @@ import 'package:ecovolt_ai/features/orders/views/order_history_screen.dart';
 import 'package:ecovolt_ai/features/orders/views/order_tracking_screen.dart';
 import 'package:ecovolt_ai/features/orders/models/order_model.dart';
 import 'package:ecovolt_ai/features/calculator/views/roi_calculator_screen.dart';
+import 'package:ecovolt_ai/features/shop/views/favorite_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -85,6 +86,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/roi-calculator',
         builder: (context, state) => const RoiCalculatorScreen(),
+      ),
+      GoRoute(
+        path: '/favorites',
+        builder: (context, state) => const FavoriteScreen(),
       ),
     ],
   );

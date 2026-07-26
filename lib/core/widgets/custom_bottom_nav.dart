@@ -89,7 +89,7 @@ class CustomBottomNav extends ConsumerWidget {
             icon: Icons.favorite_border_rounded,
             isSelected: currentIndex == 2,
             onTap: () {
-              // TODO: Implement Wishlist
+              if (currentIndex != 2) context.go('/favorites');
             },
           ),
           _NavItem(

@@ -6,6 +6,8 @@ import 'package:ecovolt_ai/features/cart/providers/cart_provider.dart';
 import 'package:ecovolt_ai/features/cart/models/cart_item.dart';
 import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 import 'package:ecovolt_ai/core/widgets/custom_bottom_nav.dart';
+import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
+import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -488,16 +490,42 @@ class _PremiumProductCard extends ConsumerWidget {
                 Positioned(
                   top: 0,
                   right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4),
-                      ],
+                  child: GestureDetector(
+                    onTap: () {
+                      final allProducts = ref.read(productProvider);
+                      final product = allProducts.firstWhere(
+                        (p) => p.title == title,
+                        orElse: () => ProductModel(
+                          id: 'unknown',
+                          title: title,
+                          category: 'unknown',
+                          price: price,
+                          imagePath: imagePath,
+                          isBestSeller: tag == 'Best Seller',
+                        ),
+                      );
+                      ref.read(favoriteProvider.notifier).toggleFavorite(product);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4),
+                        ],
+                      ),
+                      child: Consumer(
+                        builder: (context, ref, child) {
+                          final isFav = ref.watch(favoriteProvider).any((p) => p.title == title);
+                          return Icon(
+                            isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                            size: 16,
+                            color: isFav ? Colors.red : AppColors.textSecondary,
+                          );
+                        },
+                      ),
                     ),
-                    child: const Icon(Icons.favorite_border_rounded, size: 16, color: AppColors.textSecondary),
                   ),
                 )
               ],

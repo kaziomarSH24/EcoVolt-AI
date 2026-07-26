@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ecovolt_ai/features/cart/providers/cart_provider.dart';
 import 'package:ecovolt_ai/features/cart/models/cart_item.dart';
 import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
+import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
+import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
 
-class ProductCatalogScreen extends ConsumerWidget {
+class ProductCatalogScreen extends ConsumerStatefulWidget {
   final String categoryName;
 
   const ProductCatalogScreen({
@@ -15,7 +17,37 @@ class ProductCatalogScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProductCatalogScreen> createState() => _ProductCatalogScreenState();
+}
+
+class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _selectedCategory = 'All';
+
+  final List<String> _categories = ['All', 'Solar', 'Batteries', 'Inverters', 'Accessories'];
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+    
+    // Optional: Pre-select a category if passed, though usually we start with 'All'
+    // _selectedCategory = widget.categoryName; 
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(context, ref),
@@ -42,8 +74,8 @@ class ProductCatalogScreen extends ConsumerWidget {
         icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
         onPressed: () => context.pop(),
       ),
-      title: Text(
-        categoryName,
+      title: const Text(
+        'Catalog',
         style: const TextStyle(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.bold,
@@ -104,16 +136,17 @@ class ProductCatalogScreen extends ConsumerWidget {
                   const Icon(Icons.search_rounded, color: AppColors.textSecondary),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search $categoryName...',
-                        hintStyle: TextStyle(
-                          color: AppColors.textSecondary.withValues(alpha: 0.5),
-                          fontSize: 14,
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search products...',
+                          hintStyle: TextStyle(
+                            color: AppColors.textSecondary.withValues(alpha: 0.5),
+                            fontSize: 14,
+                          ),
+                          border: InputBorder.none,
                         ),
-                        border: InputBorder.none,
                       ),
-                    ),
                   ),
                 ],
               ),
@@ -134,43 +167,121 @@ class ProductCatalogScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProductList() {
-    return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+  Widget _buildCategoryPills() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.68,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        children: _categories.map((category) {
+          final isSelected = _selectedCategory == category;
+          return GestureDetector(
+            onTap: () => setState(() => _selectedCategory = category),
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : Colors.black.withValues(alpha: 0.05),
+                ),
+              ),
+              child: Text(
+                category,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
-      itemCount: 6,
-      itemBuilder: (context, index) {
-        return _CatalogProductCard(
-          title: [
-            'EcoPro 5kW Mono',
-            'VoltMax Bifacial 6',
-            'SunCore Compact',
-            'SolarPlus Flex',
-            'PowerWall Pro',
-            'InvertX Hybrid 5kW'
-          ][index],
-          price: ['\$299', '\$349', '\$210', '\$150', '\$899', '\$450'][index],
-          imagePath: 'assets/images/ev${(index % 3) + 1}.png',
-          isBestSeller: index == 0,
-        );
-      },
+    );
+  }
+
+  Widget _buildProductList() {
+    final allProducts = ref.watch(productProvider);
+    
+    final filteredProducts = allProducts.where((product) {
+      final matchesSearch = product.title.toLowerCase().contains(_searchQuery);
+      final matchesCategory = _selectedCategory == 'All' || product.category == _selectedCategory;
+      return matchesSearch && matchesCategory;
+    }).toList();
+
+    return Column(
+      children: [
+        _buildCategoryPills(),
+        const SizedBox(height: 16),
+        Expanded(
+          child: filteredProducts.isEmpty 
+              ? _buildEmptyState()
+              : GridView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  physics: const BouncingScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.65,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 24,
+                  ),
+                  itemCount: filteredProducts.length,
+                  itemBuilder: (context, index) {
+                    final product = filteredProducts[index];
+                    return _ProductCard(
+                      title: product.title,
+                      price: product.price,
+                      imagePath: product.imagePath,
+                      isBestSeller: product.isBestSeller,
+                      index: index,
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off_rounded, size: 64, color: AppColors.textSecondary.withValues(alpha: 0.3)),
+          const SizedBox(height: 16),
+          const Text(
+            'No products found',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try adjusting your search or category filter',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _CatalogProductCard extends ConsumerWidget {
+class _ProductCard extends ConsumerWidget {
+  final int index;
   final String title;
   final String price;
   final String imagePath;
   final bool isBestSeller;
 
-  const _CatalogProductCard({
+  const _ProductCard({
+    required this.index,
     required this.title,
     required this.price,
     required this.imagePath,
@@ -245,22 +356,54 @@ class _CatalogProductCard extends ConsumerWidget {
                         ),
                       ),
                     ),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4),
-                        ],
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: () {
+                          // Find the product model
+                          final allProducts = ref.read(productProvider);
+                          final product = allProducts.firstWhere(
+                            (p) => p.title == title,
+                            orElse: () => ProductModel(
+                              id: 'unknown',
+                              title: title,
+                              category: 'unknown',
+                              price: price,
+                              imagePath: imagePath,
+                              isBestSeller: isBestSeller,
+                            ),
+                          );
+                          ref.read(favoriteProvider.notifier).toggleFavorite(product);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              )
+                            ],
+                          ),
+                          child: Consumer(
+                            builder: (context, ref, child) {
+                              // We just use the title to check since our dummy provider is simple
+                              final isFav = ref.watch(favoriteProvider).any((p) => p.title == title);
+                              return Icon(
+                                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                size: 14,
+                                color: isFav ? Colors.red : AppColors.textSecondary,
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                      child: const Icon(Icons.favorite_border_rounded, size: 14, color: AppColors.textSecondary),
-                    ),
-                  )
-                ],
+                    )
+                  ],
               ),
             ),
           ),
