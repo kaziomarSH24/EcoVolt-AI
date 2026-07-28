@@ -16,6 +16,18 @@ class AuthRepository {
     );
   }
 
+  // Verify OTP token
+  Future<void> verifyOTP({
+    required String email,
+    required String token,
+  }) async {
+    await _supabase.auth.verifyOTP(
+      email: email,
+      token: token,
+      type: OtpType.signup,
+    );
+  }
+
   // Sign in with Email and Password
   Future<AuthResponse> signInWithEmail({
     required String email,

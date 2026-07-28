@@ -205,7 +205,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                             ScaffoldMessenger.of(context).showSnackBar(
                                               const SnackBar(content: Text('Account created! Please verify your email if required.')),
                                             );
-                                            context.go('/home');
+                                            context.go('/otp-verify', extra: _emailController.text.trim());
                                           }
                                         } on AuthException catch (e) {
                                           if (context.mounted) {
@@ -246,9 +246,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                         }
                                       }
                                     },
-                                    child: const Text(
-                                      'Create Account',
-                                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    child: Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(vertical: 18),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: const Text(
+                                        'Create Account',
+                                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                   ),
                             const SizedBox(height: 24),

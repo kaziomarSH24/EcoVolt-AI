@@ -21,6 +21,7 @@ import 'package:ecovolt_ai/features/orders/models/order_model.dart';
 import 'package:ecovolt_ai/features/calculator/views/roi_calculator_screen.dart';
 import 'package:ecovolt_ai/features/shop/views/favorite_screen.dart';
 import 'package:ecovolt_ai/features/auth/providers/auth_provider.dart';
+import 'package:ecovolt_ai/features/auth/views/otp_verify_screen.dart';
 
 // Create a notifier that triggers when auth state changes
 class RouterNotifier extends ChangeNotifier {
@@ -40,11 +41,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final isLoggedIn = Supabase.instance.client.auth.currentUser != null;
       final isLoggingIn = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
+      final isOtpVerifying = state.matchedLocation == '/otp-verify';
 
-      if (!isLoggedIn && !isLoggingIn && state.matchedLocation != '/') {
+      if (!isLoggedIn && !isLoggingIn && !isOtpVerifying && state.matchedLocation != '/') {
         return '/login';
       }
-      if (isLoggedIn && isLoggingIn) {
+      if (isLoggedIn && (isLoggingIn || isOtpVerifying)) {
         return '/home';
       }
       return null;
@@ -61,6 +63,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
+      ),
+      GoRoute(
+        path: '/otp-verify',
+        builder: (context, state) {
+          final email = state.extra as String? ?? '';
+          return OtpVerifyScreen(email: email);
+        },
       ),
       GoRoute(
         path: '/home',

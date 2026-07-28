@@ -40,6 +40,7 @@ dependencies:
   add_to_cart_animation: ^2.0.4
   supabase_flutter: ^2.16.0
   flutter_dotenv: ^6.0.1
+  pinput: ^6.0.2
 
 dev_dependencies:
   flutter_test:
