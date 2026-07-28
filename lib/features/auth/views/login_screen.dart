@@ -1,33 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
-import 'package:ecovolt_ai/core/widgets/custom_button.dart';
+import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 import 'package:ecovolt_ai/core/widgets/custom_text_field.dart';
+import 'package:ecovolt_ai/features/auth/providers/auth_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   //for form validation
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-  //handle login
-  void _handleLogin(){
-    if(_formKey.currentState!.validate()){
-      context.go('/home');
-    }
   }
 
   @override
@@ -123,15 +121,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _emailController,
                             prefixIcon: const Icon(Icons.mail_outline),
                             keyboardType: TextInputType.emailAddress,
-                            // validator: (value) {
-                            //   if (value == null || value.trim().isEmpty) {
-                            //     return 'Email is required';
-                            //   }
-                            //   if (!value.contains('@') || !value.contains('.')) {
-                            //     return 'Please enter a valid email';
-                            //   }
-                            //   return null;
-                            // },
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Email is required';
+                              }
+                              if (!value.contains('@') || !value.contains('.')) {
+                                return 'Please enter a valid email';
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 16),
                           CustomTextField(
@@ -139,13 +137,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             hintText: '••••••••',
                             controller: _passwordController,
                             isPassword: true,
-                            // validator: (value){
-                            //   if(value == null || value.trim().isEmpty){
-                            //     return 'Password is required';
-                            //   }
-                            //   return null;
-                            // },
                             prefixIcon: const Icon(Icons.lock_outline),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Password is required';
+                              }
+                              return null;
+                            },
                             labelSuffix: TextButton(
                               onPressed: () {},
                               style: TextButton.styleFrom(
@@ -164,17 +162,74 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 16), // Reduced from 24
-                          CustomButton(
-                            text: 'Login',
-                            icon: const Icon(
-                              Icons.arrow_forward,
-                              size: 18,
-                              color: Colors.white,
-                            ),
-                            onPressed: _handleLogin,
-                          ),
-                          const SizedBox(height: 16), // Reduced from 24
+                          const SizedBox(height: 32),
+                          
+                          _isLoading
+                              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                              : BouncyButton(
+                                  onTap: () async {
+                                    if (_formKey.currentState!.validate()) {
+                                      setState(() => _isLoading = true);
+                                      try {
+                                        await ref.read(authRepositoryProvider).signInWithEmail(
+                                          email: _emailController.text.trim(),
+                                          password: _passwordController.text.trim(),
+                                        );
+                                        if (context.mounted) {
+                                          context.go('/home');
+                                        }
+                                      } on AuthException catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Row(
+                                                children: [
+                                                  const Icon(Icons.error_outline, color: Colors.white),
+                                                  const SizedBox(width: 12),
+                                                  Expanded(child: Text(e.message)),
+                                                ],
+                                              ),
+                                              backgroundColor: Colors.redAccent,
+                                              behavior: SnackBarBehavior.floating,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: const Row(
+                                                children: [
+                                                  Icon(Icons.error_outline, color: Colors.white),
+                                                  SizedBox(width: 12),
+                                                  Expanded(child: Text('An unexpected error occurred. Please try again.')),
+                                                ],
+                                              ),
+                                              backgroundColor: Colors.redAccent,
+                                              behavior: SnackBarBehavior.floating,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            ),
+                                          );
+                                        }
+                                      } finally {
+                                        if (mounted) setState(() => _isLoading = false);
+                                      }
+                                    }
+                                  },
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(vertical: 18),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: const Text('Login', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  ),
+                                ),
+                          
+                          const SizedBox(height: 16),
 
                           // Divider
                           Row(
@@ -210,23 +265,36 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16), // Reduced from 24
+                          const SizedBox(height: 16),
 
                           // Google Login Button
-                          CustomButton(
-                            text: 'Continue with Google',
-                            backgroundColor: AppColors.surface,
-                            textColor: AppColors.textPrimary,
-                            icon: Image.network(
-                              'https://img.icons8.com/color/48/000000/google-logo.png',
-                              width: 24,
-                              height: 24,
-                            ),
-                            onPressed: () {
+                          BouncyButton(
+                            onTap: () {
                               // TODO: Implement Google Login
                             },
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.2)),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.network(
+                                    'https://img.icons8.com/color/48/000000/google-logo.png',
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text('Continue with Google', style: TextStyle(fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            ),
                           ),
-                          const SizedBox(height: 16), // Reduced from 24
+                          const SizedBox(height: 16),
 
                           // Sign up text
                           Row(

@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
-import 'package:ecovolt_ai/core/widgets/custom_button.dart';
+import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 import 'package:ecovolt_ai/core/widgets/custom_text_field.dart';
+import 'package:ecovolt_ai/features/auth/providers/auth_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   // GlobalKey is used to identify the Form and trigger validation
   final _formKey = GlobalKey<FormState>();
   
@@ -19,6 +22,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -27,14 +31,6 @@ class _SignupScreenState extends State<SignupScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
-  }
-
-  void _handleSignup() {
-    // Validate returns true if the form is valid, otherwise false.
-    if (_formKey.currentState!.validate()) {
-      // If valid, proceed with sign up logic
-      context.go('/home');
-    }
   }
 
   @override
@@ -162,7 +158,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               isPassword: true,
                               prefixIcon: const Icon(Icons.lock_outline),
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
+                                if (value == null || value.trim().isEmpty) {
                                   return 'Password is required';
                                 }
                                 if (value.length < 6) {
@@ -181,7 +177,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               isPassword: true,
                               prefixIcon: const Icon(Icons.lock_outline),
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
+                                if (value == null || value.trim().isEmpty) {
                                   return 'Please confirm your password';
                                 }
                                 if (value != _passwordController.text) {
@@ -193,15 +189,68 @@ class _SignupScreenState extends State<SignupScreen> {
                             const SizedBox(height: 32),
 
                             // Sign Up Button
-                            CustomButton(
-                              text: 'Create Account',
-                              icon: const Icon(
-                                Icons.person_add_alt_1_outlined,
-                                size: 18,
-                                color: Colors.white,
-                              ),
-                              onPressed: _handleSignup,
-                            ),
+                            _isLoading
+                                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                                : BouncyButton(
+                                    onTap: () async {
+                                      if (_formKey.currentState!.validate()) {
+                                        setState(() => _isLoading = true);
+                                        try {
+                                          await ref.read(authRepositoryProvider).signUpWithEmail(
+                                            email: _emailController.text.trim(),
+                                            password: _passwordController.text.trim(),
+                                            name: _nameController.text.trim(),
+                                          );
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('Account created! Please verify your email if required.')),
+                                            );
+                                            context.go('/home');
+                                          }
+                                        } on AuthException catch (e) {
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Row(
+                                                  children: [
+                                                    const Icon(Icons.error_outline, color: Colors.white),
+                                                    const SizedBox(width: 12),
+                                                    Expanded(child: Text(e.message)),
+                                                  ],
+                                                ),
+                                                backgroundColor: Colors.redAccent,
+                                                behavior: SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                              ),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: const Row(
+                                                  children: [
+                                                    Icon(Icons.error_outline, color: Colors.white),
+                                                    SizedBox(width: 12),
+                                                    Expanded(child: Text('An unexpected error occurred. Please try again.')),
+                                                  ],
+                                                ),
+                                                backgroundColor: Colors.redAccent,
+                                                behavior: SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                              ),
+                                            );
+                                          }
+                                        } finally {
+                                          if (mounted) setState(() => _isLoading = false);
+                                        }
+                                      }
+                                    },
+                                    child: const Text(
+                                      'Create Account',
+                                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
                             const SizedBox(height: 24),
 
                             // Login text

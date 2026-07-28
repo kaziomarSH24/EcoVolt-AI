@@ -20,10 +20,23 @@ import 'package:ecovolt_ai/features/orders/views/order_tracking_screen.dart';
 import 'package:ecovolt_ai/features/orders/models/order_model.dart';
 import 'package:ecovolt_ai/features/calculator/views/roi_calculator_screen.dart';
 import 'package:ecovolt_ai/features/shop/views/favorite_screen.dart';
+import 'package:ecovolt_ai/features/auth/providers/auth_provider.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
+    redirect: (context, state) {
+      final isLoggedIn = ref.watch(currentUserProvider) != null;
+      final isLoggingIn = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
+
+      if (!isLoggedIn && !isLoggingIn && state.matchedLocation != '/') {
+        return '/login';
+      }
+      if (isLoggedIn && isLoggingIn) {
+        return '/home';
+      }
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/',

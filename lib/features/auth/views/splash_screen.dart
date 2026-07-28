@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,6 +14,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    FlutterNativeSplash.remove();
     _navigateToNext();
   }
 
