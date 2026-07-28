@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/core/widgets/custom_bottom_nav.dart';
+import 'package:ecovolt_ai/features/auth/providers/auth_provider.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -21,7 +23,7 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   _buildStatsSection(),
                   const SizedBox(height: 32),
-                  _buildSettingsSection(context),
+                  _buildSettingsSection(context, ref),
                 ],
               ),
             ),
@@ -163,7 +165,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingsSection(BuildContext context) {
+  Widget _buildSettingsSection(BuildContext context, WidgetRef ref) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
@@ -223,9 +225,12 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 12),
           
           InkWell(
-            onTap: () {
+            onTap: () async {
               // Sign out logic
-              context.go('/login');
+              await ref.read(authRepositoryProvider).signOut();
+              if (context.mounted) {
+                context.go('/login');
+              }
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),

@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Import your existing screens
 import '../../features/auth/views/splash_screen.dart';
@@ -9,7 +10,6 @@ import '../../features/auth/views/signup_screen.dart';
 import '../../features/home/views/home_screen.dart';
 import 'package:ecovolt_ai/features/shop/views/product_catalog_screen.dart';
 import 'package:ecovolt_ai/features/shop/views/categories_screen.dart';
-import 'package:ecovolt_ai/features/shop/views/product_details_screen.dart';
 import 'package:ecovolt_ai/features/shop/views/product_details_screen.dart';
 import 'package:ecovolt_ai/features/checkout/views/checkout_screen.dart';
 import 'package:ecovolt_ai/features/cart/views/cart_screen.dart';
@@ -22,11 +22,23 @@ import 'package:ecovolt_ai/features/calculator/views/roi_calculator_screen.dart'
 import 'package:ecovolt_ai/features/shop/views/favorite_screen.dart';
 import 'package:ecovolt_ai/features/auth/providers/auth_provider.dart';
 
+// Create a notifier that triggers when auth state changes
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  RouterNotifier(this._ref) {
+    _ref.listen(authStateProvider, (_, _) => notifyListeners());
+  }
+}
+
 final goRouterProvider = Provider<GoRouter>((ref) {
+  final notifier = RouterNotifier(ref);
+
   return GoRouter(
+    refreshListenable: notifier,
     initialLocation: '/',
     redirect: (context, state) {
-      final isLoggedIn = ref.watch(currentUserProvider) != null;
+      final isLoggedIn = Supabase.instance.client.auth.currentUser != null;
       final isLoggingIn = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
 
       if (!isLoggedIn && !isLoggingIn && state.matchedLocation != '/') {
