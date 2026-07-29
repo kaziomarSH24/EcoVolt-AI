@@ -151,7 +151,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         address: addressDetails,
       );
       
-      if (!await launchUrl(Uri.parse(checkoutUrl), mode: LaunchMode.inAppBrowserView)) {
+      if (!await launchUrl(Uri.parse(checkoutUrl), mode: LaunchMode.externalApplication)) {
         throw Exception('Could not launch payment URL');
       }
     } catch (e) {
