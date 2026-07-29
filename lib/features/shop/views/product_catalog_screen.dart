@@ -14,7 +14,7 @@ class ProductCatalogScreen extends ConsumerStatefulWidget {
 
   const ProductCatalogScreen({
     super.key,
-    this.categoryName = 'Solar Panels',
+    this.categoryName = 'All',
   });
 
   @override
@@ -37,8 +37,8 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
       });
     });
     
-    // Optional: Pre-select a category if passed, though usually we start with 'All'
-    // _selectedCategory = widget.categoryName; 
+    // Pre-select a category if passed
+    _selectedCategory = widget.categoryName; 
   }
 
   @override

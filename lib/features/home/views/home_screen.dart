@@ -292,16 +292,33 @@ class HomeScreen extends ConsumerWidget {
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Row(
-                children: categories.map((cat) {
-                  return Padding(
+                children: [
+                  // 'All' Pill
+                  Padding(
                     padding: const EdgeInsets.only(right: 12.0),
-                    child: _CategoryPill(
-                      icon: IconHelper.getIcon(cat.iconName),
-                      label: cat.name,
-                      isSelected: false,
+                    child: GestureDetector(
+                      onTap: () => context.push('/catalog', extra: 'All'),
+                      child: const _CategoryPill(
+                        icon: Icons.grid_view_rounded,
+                        label: 'All',
+                        isSelected: false,
+                      ),
                     ),
-                  );
-                }).toList(),
+                  ),
+                  ...categories.map((cat) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 12.0),
+                      child: GestureDetector(
+                        onTap: () => context.push('/catalog', extra: cat.name),
+                        child: _CategoryPill(
+                          icon: IconHelper.getIcon(cat.iconName),
+                          label: cat.name,
+                          isSelected: false,
+                        ),
+                      ),
+                    );
+                  }),
+                ],
               ),
             );
           },
@@ -377,13 +394,10 @@ class _CategoryPill extends StatelessWidget {
     this.isSelected = false,
   });
 
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/catalog'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+    decoration: BoxDecoration(
         color: isSelected ? AppColors.primary : Colors.white,
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
@@ -415,7 +429,6 @@ class _CategoryPill extends StatelessWidget {
           ),
         ],
       ),
-    ),
     );
   }
 }

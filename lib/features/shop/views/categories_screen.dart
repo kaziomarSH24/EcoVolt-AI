@@ -42,9 +42,19 @@ class CategoriesScreen extends ConsumerWidget {
               mainAxisSpacing: 20,
               crossAxisSpacing: 20,
             ),
-            itemCount: categories.length,
+            itemCount: categories.length + 1,
             itemBuilder: (context, index) {
-              final cat = categories[index];
+              if (index == 0) {
+                return _buildCategoryCard(
+                  context: context,
+                  title: 'All',
+                  iconName: 'category', // Will fallback to Icons.category
+                  imageUrl: null,
+                  colorHex: '#F3F4F6', // Light gray
+                  iconColorHex: '#424242', // Dark gray
+                );
+              }
+              final cat = categories[index - 1];
               return _buildCategoryCard(
                 context: context,
                 title: cat.name,
@@ -74,7 +84,7 @@ class CategoriesScreen extends ConsumerWidget {
     final iconColor = IconHelper.getColorFromHex(iconColorHex, fallback: Colors.green);
 
     return GestureDetector(
-      onTap: () => context.push('/catalog'),
+      onTap: () => context.push('/catalog', extra: title),
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,

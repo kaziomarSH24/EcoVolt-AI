@@ -77,7 +77,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/catalog',
-        builder: (context, state) => const ProductCatalogScreen(),
+        builder: (context, state) {
+          final categoryName = state.extra as String?;
+          return ProductCatalogScreen(categoryName: categoryName ?? 'All');
+        },
       ),
       GoRoute(
         path: '/categories',
