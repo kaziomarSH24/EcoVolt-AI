@@ -1,55 +1,63 @@
-enum OrderStatus {
-  placed,
-  processing,
-  shipped,
-  delivered,
-  cancelled,
-}
-
-class OrderItem {
-  final String title;
-  final int quantity;
-  final String price;
-  final String imagePath;
-
-  OrderItem({
-    required this.title,
-    required this.quantity,
-    required this.price,
-    required this.imagePath,
-  });
-}
-
 class OrderModel {
   final String id;
-  final DateTime date;
-  final String totalAmount;
-  final OrderStatus status;
-  final List<OrderItem> items;
-  final String shippingAddress;
-  final String paymentMethod;
+  final String userId;
+  final double totalAmount;
+  final String status;
+  final String address;
+  final DateTime createdAt;
+  final List<OrderItemModel> items;
 
   OrderModel({
     required this.id,
-    required this.date,
+    required this.userId,
     required this.totalAmount,
     required this.status,
+    required this.address,
+    required this.createdAt,
     required this.items,
-    required this.shippingAddress,
-    required this.paymentMethod,
   });
 
-  String get formattedDate {
-    return "${date.day}/${date.month}/${date.year}";
-  }
-
-  String get statusText {
-    switch (status) {
-      case OrderStatus.placed: return "Order Placed";
-      case OrderStatus.processing: return "Processing";
-      case OrderStatus.shipped: return "Shipped";
-      case OrderStatus.delivered: return "Delivered";
-      case OrderStatus.cancelled: return "Cancelled";
+  factory OrderModel.fromJson(Map<String, dynamic> json) {
+    var itemsList = <OrderItemModel>[];
+    if (json['order_items'] != null) {
+      itemsList = (json['order_items'] as List)
+          .map((item) => OrderItemModel.fromJson(item))
+          .toList();
     }
+    return OrderModel(
+      id: json['id'],
+      userId: json['user_id'],
+      totalAmount: (json['total_amount'] as num).toDouble(),
+      status: json['status'],
+      address: json['address'],
+      createdAt: DateTime.parse(json['created_at']),
+      items: itemsList,
+    );
+  }
+}
+
+class OrderItemModel {
+  final String id;
+  final String productId;
+  final int quantity;
+  final double priceAtTime;
+  final Map<String, dynamic>? product; // To store joined product data
+
+  OrderItemModel({
+    required this.id,
+    required this.productId,
+    required this.quantity,
+    required this.priceAtTime,
+    this.product,
+  });
+
+  factory OrderItemModel.fromJson(Map<String, dynamic> json) {
+    return OrderItemModel(
+      id: json['id'],
+      productId: json['product_id'],
+      quantity: json['quantity'],
+      priceAtTime: (json['price_at_purchase'] as num).toDouble(),
+      product: json['products'], // Supabase joins relationship name is often the table name
+    );
   }
 }

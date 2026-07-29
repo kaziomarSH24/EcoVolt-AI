@@ -5,6 +5,7 @@ import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/core/widgets/custom_bottom_nav.dart';
 import 'package:ecovolt_ai/features/auth/providers/auth_provider.dart';
 import 'package:ecovolt_ai/features/profile/providers/profile_provider.dart';
+import 'package:ecovolt_ai/features/orders/providers/order_history_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -21,8 +22,8 @@ class ProfileScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   _buildHeader(ref),
-                  const SizedBox(height: 24),
-                  _buildStatsSection(),
+                  const SizedBox(height: 32),
+                  _buildStatsSection(ref),
                   const SizedBox(height: 32),
                   _buildSettingsSection(context, ref),
                 ],
@@ -123,15 +124,28 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsSection() {
+  Widget _buildStatsSection(WidgetRef ref) {
+    final ordersAsyncValue = ref.watch(orderHistoryProvider);
+    
+    int activeOrdersCount = 0;
+    double totalSpent = 0.0;
+    
+    ordersAsyncValue.whenData((orders) {
+      activeOrdersCount = orders.where((o) => o.status == 'pending' || o.status == 'paid' || o.status == 'shipped').length;
+      totalSpent = orders.where((o) => o.status != 'cancelled').fold(0.0, (sum, o) => sum + o.totalAmount);
+    });
+    
+    // Impact score logic: For every 1000 spent, get 1 point
+    final impactScore = (totalSpent / 1000).clamp(0.0, 10.0).toStringAsFixed(1);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildStatCard('Active\nOrders', '3', Icons.local_shipping_outlined),
-          _buildStatCard('Total\nSpent', '৳850', Icons.account_balance_wallet_outlined),
-          _buildStatCard('Impact\nScore', '4.9', Icons.energy_savings_leaf_outlined, iconColor: Colors.green),
+          _buildStatCard('Active\nOrders', activeOrdersCount.toString(), Icons.local_shipping_outlined),
+          _buildStatCard('Total\nSpent', '৳${totalSpent.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined),
+          _buildStatCard('Impact\nScore', impactScore, Icons.energy_savings_leaf_outlined, iconColor: Colors.green),
         ],
       ),
     );
@@ -316,7 +330,8 @@ class ProfileScreen extends ConsumerWidget {
               Switch(
                 value: toggleValue,
                 onChanged: (val) {},
-                activeColor: AppColors.primary,
+                activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
+                activeThumbColor: AppColors.primary,
               )
             else
               const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
