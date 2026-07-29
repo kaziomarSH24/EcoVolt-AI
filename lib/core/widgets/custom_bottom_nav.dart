@@ -3,19 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/features/cart/providers/cart_provider.dart';
+import 'package:add_to_cart_animation/add_to_cart_animation.dart';
+import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
 
 class CustomBottomNav extends ConsumerWidget {
   final int currentIndex;
+  final GlobalKey<CartIconKey>? cartKey;
 
   const CustomBottomNav({
     super.key,
     required this.currentIndex,
+    this.cartKey,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cartItems = ref.watch(cartProvider);
     final totalCartItems = cartItems.fold(0, (sum, item) => sum + item.quantity);
+    final totalFavoriteItems = ref.watch(favoriteProvider).length;
+    final key = cartKey;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -46,10 +52,20 @@ class CustomBottomNav extends ConsumerWidget {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                _NavItem(
-                  icon: Icons.shopping_bag_outlined,
-                  isSelected: currentIndex == 1, // Optional: if we want a separate catalog tab later
-                ),
+                if (key != null)
+                  AddToCartIcon(
+                    key: key,
+                    icon: _NavItem(
+                      icon: Icons.shopping_bag_outlined,
+                      isSelected: currentIndex == 1,
+                    ),
+                    badgeOptions: const BadgeOptions(active: false),
+                  )
+                else
+                  _NavItem(
+                    icon: Icons.shopping_bag_outlined,
+                    isSelected: currentIndex == 1,
+                  ),
                 if (totalCartItems > 0)
                   Positioned(
                     right: -4,
@@ -85,12 +101,39 @@ class CustomBottomNav extends ConsumerWidget {
               child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 24),
             ),
           ),
-          _NavItem(
-            icon: Icons.favorite_border_rounded,
-            isSelected: currentIndex == 2,
+          GestureDetector(
             onTap: () {
               if (currentIndex != 2) context.go('/favorites');
             },
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                _NavItem(
+                  icon: Icons.favorite_border_rounded,
+                  isSelected: currentIndex == 2,
+                ),
+                if (totalFavoriteItems > 0)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        totalFavoriteItems.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
           _NavItem(
             icon: Icons.person_outline_rounded,

@@ -11,15 +11,35 @@ import 'package:ecovolt_ai/features/shop/providers/category_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
 import 'package:ecovolt_ai/utils/icon_helper.dart';
 
-class HomeScreen extends ConsumerWidget {
+import 'package:add_to_cart_animation/add_to_cart_animation.dart';
+
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final GlobalKey<CartIconKey> cartKey = GlobalKey<CartIconKey>();
+  late Function(GlobalKey) runAddToCartAnimation;
+
+  @override
+  Widget build(BuildContext context) {
     // Light & Clean Premium UI
-    return Scaffold(
-      backgroundColor: Colors.white, // Very clean white background
-      body: Stack(
+    return AddToCartAnimation(
+      cartKey: cartKey,
+      height: 30,
+      width: 30,
+      opacity: 0.85,
+      dragAnimation: const DragToCartAnimationOptions(rotation: true),
+      jumpAnimation: const JumpAnimationOptions(),
+      createAddToCartAnimation: (runAddToCartAnimation) {
+        this.runAddToCartAnimation = runAddToCartAnimation;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white, // Very clean white background
+        body: Stack(
         children: [
           // Background subtle shapes/accents if any
           Positioned(
@@ -64,10 +84,11 @@ class HomeScreen extends ConsumerWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            child: const CustomBottomNav(currentIndex: 0),
+            child: CustomBottomNav(currentIndex: 0, cartKey: cartKey),
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -369,6 +390,7 @@ class HomeScreen extends ConsumerWidget {
                       price: product.price,
                       imagePath: product.imagePath,
                       tag: 'Best Seller',
+                      onAddToCartClick: (key) => runAddToCartAnimation(key),
                     ),
                   );
                 }).toList(),
@@ -433,12 +455,13 @@ class _CategoryPill extends StatelessWidget {
   }
 }
 
-class _PremiumProductCard extends ConsumerWidget {
+class _PremiumProductCard extends ConsumerStatefulWidget {
   final String title;
   final String subtitle;
   final String price;
   final String imagePath;
   final String? tag;
+  final void Function(GlobalKey)? onAddToCartClick;
 
   const _PremiumProductCard({
     required this.title,
@@ -446,19 +469,27 @@ class _PremiumProductCard extends ConsumerWidget {
     required this.price,
     required this.imagePath,
     this.tag,
+    this.onAddToCartClick,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PremiumProductCard> createState() => _PremiumProductCardState();
+}
+
+class _PremiumProductCardState extends ConsumerState<_PremiumProductCard> {
+  final GlobalKey imageKey = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
         context.push('/product-details', extra: {
-          'title': title,
-          'price': price,
-          'imagePath': imagePath,
-          'isBestSeller': tag == 'Best Seller',
-          'description': ref.read(productProvider).value?.firstWhere((p) => p.title == title).description,
-          'features': ref.read(productProvider).value?.firstWhere((p) => p.title == title).features,
+          'title': widget.title,
+          'price': widget.price,
+          'imagePath': widget.imagePath,
+          'isBestSeller': widget.tag == 'Best Seller',
+          'description': ref.read(productProvider).value?.firstWhere((p) => p.title == widget.title).description,
+          'features': ref.read(productProvider).value?.firstWhere((p) => p.title == widget.title).features,
         });
       },
       child: Container(
@@ -489,14 +520,17 @@ class _PremiumProductCard extends ConsumerWidget {
             child: Stack(
               children: [
                 Center(
-                  child: Hero(
-                    tag: 'catalog_$title',
-                    child: imagePath.startsWith('http')
-                        ? Image.network(imagePath, fit: BoxFit.contain)
-                        : Image.asset(imagePath, fit: BoxFit.contain),
+                  child: Container(
+                    key: imageKey,
+                    child: Hero(
+                      tag: 'catalog_${widget.title}',
+                      child: widget.imagePath.startsWith('http')
+                          ? Image.network(widget.imagePath, fit: BoxFit.contain)
+                          : Image.asset(widget.imagePath, fit: BoxFit.contain),
+                    ),
                   ),
                 ),
-                if (tag != null)
+                if (widget.tag != null)
                   Positioned(
                     top: 0,
                     left: 0,
@@ -507,7 +541,7 @@ class _PremiumProductCard extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        tag!,
+                        widget.tag!,
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -524,14 +558,14 @@ class _PremiumProductCard extends ConsumerWidget {
                       final asyncProducts = ref.read(productProvider);
                       final allProducts = asyncProducts.value ?? [];
                       final product = allProducts.firstWhere(
-                        (p) => p.title == title,
+                        (p) => p.title == widget.title,
                         orElse: () => ProductModel(
-                          id: title, // Use title as ID so each fallback is unique
-                          title: title,
+                          id: widget.title, // Use title as ID so each fallback is unique
+                          title: widget.title,
                           category: null,
-                          price: price,
-                          imagePath: imagePath,
-                          isBestSeller: tag == 'Best Seller',
+                          price: widget.price,
+                          imagePath: widget.imagePath,
+                          isBestSeller: widget.tag == 'Best Seller',
                         ),
                       );
                       ref.read(favoriteProvider.notifier).toggleFavorite(product);
@@ -547,7 +581,7 @@ class _PremiumProductCard extends ConsumerWidget {
                       ),
                       child: Consumer(
                         builder: (context, ref, child) {
-                          final isFav = ref.watch(favoriteProvider).any((p) => p.title == title);
+                          final isFav = ref.watch(favoriteProvider).any((p) => p.title == widget.title);
                           return Icon(
                             isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                             size: 16,
@@ -568,7 +602,7 @@ class _PremiumProductCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  widget.title,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -580,7 +614,7 @@ class _PremiumProductCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  subtitle,
+                  widget.subtitle,
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary.withValues(alpha: 0.6),
@@ -591,7 +625,7 @@ class _PremiumProductCard extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      price,
+                      widget.price,
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -600,11 +634,12 @@ class _PremiumProductCard extends ConsumerWidget {
                     ),
                     BouncyButton(
                       onTap: () {
+                        widget.onAddToCartClick?.call(imageKey);
                         ref.read(cartProvider.notifier).addToCart(
                           CartItem(
-                            title: title,
-                            price: price,
-                            imagePath: imagePath,
+                            title: widget.title,
+                            price: widget.price,
+                            imagePath: widget.imagePath,
                           ),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(

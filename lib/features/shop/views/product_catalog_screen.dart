@@ -8,6 +8,7 @@ import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/category_provider.dart';
+import 'package:add_to_cart_animation/add_to_cart_animation.dart';
 
 class ProductCatalogScreen extends ConsumerStatefulWidget {
   final String categoryName;
@@ -25,6 +26,8 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedCategory = 'All';
+  final GlobalKey<CartIconKey> cartKey = GlobalKey<CartIconKey>();
+  late Function(GlobalKey) runAddToCartAnimation;
 
   final List<String> _categories = ['All', 'Solar', 'Batteries', 'Inverters', 'Accessories'];
 
@@ -49,9 +52,19 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: _buildAppBar(context, ref),
+    return AddToCartAnimation(
+      cartKey: cartKey,
+      height: 30,
+      width: 30,
+      opacity: 0.85,
+      dragAnimation: const DragToCartAnimationOptions(rotation: true),
+      jumpAnimation: const JumpAnimationOptions(),
+      createAddToCartAnimation: (runAddToCartAnimation) {
+        this.runAddToCartAnimation = runAddToCartAnimation;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: _buildAppBar(context, ref),
       body: Column(
         children: [
           _buildSearchAndFilter(),
@@ -60,6 +73,7 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -88,9 +102,13 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            IconButton(
-              icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.textPrimary),
-              onPressed: () => context.push('/cart'),
+            AddToCartIcon(
+              key: cartKey,
+              icon: IconButton(
+                icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.textPrimary),
+                onPressed: () => context.push('/cart'),
+              ),
+              badgeOptions: const BadgeOptions(active: false),
             ),
             if (totalCartItems > 0)
               Positioned(
@@ -246,6 +264,7 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
                     imagePath: product.imagePath,
                     isBestSeller: product.isBestSeller,
                     index: index,
+                    onAddToCartClick: (key) => runAddToCartAnimation(key),
                   );
                 },
               );
@@ -287,12 +306,13 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
   }
 }
 
-class _ProductCard extends ConsumerWidget {
+class _ProductCard extends ConsumerStatefulWidget {
   final int index;
   final String title;
   final String price;
   final String imagePath;
   final bool isBestSeller;
+  final void Function(GlobalKey)? onAddToCartClick;
 
   const _ProductCard({
     required this.index,
@@ -300,19 +320,27 @@ class _ProductCard extends ConsumerWidget {
     required this.price,
     required this.imagePath,
     this.isBestSeller = false,
+    this.onAddToCartClick,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends ConsumerState<_ProductCard> {
+  final GlobalKey imageKey = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
         context.push('/product-details', extra: {
-          'title': title,
-          'price': price,
-          'imagePath': imagePath,
-          'isBestSeller': isBestSeller,
-          'description': ref.read(productProvider).value?.firstWhere((p) => p.title == title).description,
-          'features': ref.read(productProvider).value?.firstWhere((p) => p.title == title).features,
+          'title': widget.title,
+          'price': widget.price,
+          'imagePath': widget.imagePath,
+          'isBestSeller': widget.isBestSeller,
+          'description': ref.read(productProvider).value?.firstWhere((p) => p.title == widget.title).description,
+          'features': ref.read(productProvider).value?.firstWhere((p) => p.title == widget.title).features,
         });
       },
       child: Container(
@@ -344,14 +372,17 @@ class _ProductCard extends ConsumerWidget {
               child: Stack(
                 children: [
                   Center(
-                    child: Hero(
-                      tag: 'catalog_$title', // unique tag
-                      child: imagePath.startsWith('http')
-                          ? Image.network(imagePath, fit: BoxFit.contain)
-                          : Image.asset(imagePath, fit: BoxFit.contain),
+                    child: Container(
+                      key: imageKey,
+                      child: Hero(
+                        tag: 'catalog_${widget.title}', // unique tag
+                        child: widget.imagePath.startsWith('http')
+                            ? Image.network(widget.imagePath, fit: BoxFit.contain)
+                            : Image.asset(widget.imagePath, fit: BoxFit.contain),
+                      ),
                     ),
                   ),
-                  if (isBestSeller)
+                  if (widget.isBestSeller)
                     Positioned(
                       top: 0,
                       left: 0,
@@ -383,14 +414,14 @@ class _ProductCard extends ConsumerWidget {
                           final asyncProducts = ref.read(productProvider);
                           final allProducts = asyncProducts.value ?? [];
                           final product = allProducts.firstWhere(
-                            (p) => p.title == title,
+                            (p) => p.title == widget.title,
                             orElse: () => ProductModel(
-                              id: title, // Use title for fallback unique ID
-                              title: title,
+                              id: widget.title, // Use title for fallback unique ID
+                              title: widget.title,
                               category: null,
-                              price: price,
-                              imagePath: imagePath,
-                              isBestSeller: isBestSeller,
+                              price: widget.price,
+                              imagePath: widget.imagePath,
+                              isBestSeller: widget.isBestSeller,
                             ),
                           );
                           ref.read(favoriteProvider.notifier).toggleFavorite(product);
@@ -411,7 +442,7 @@ class _ProductCard extends ConsumerWidget {
                           child: Consumer(
                             builder: (context, ref, child) {
                               // We just use the title to check since our dummy provider is simple
-                              final isFav = ref.watch(favoriteProvider).any((p) => p.title == title);
+                              final isFav = ref.watch(favoriteProvider).any((p) => p.title == widget.title);
                               return Icon(
                                 isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                                 size: 14,
@@ -436,7 +467,7 @@ class _ProductCard extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    title,
+                    widget.title,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -451,7 +482,7 @@ class _ProductCard extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        price,
+                        widget.price,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -460,11 +491,12 @@ class _ProductCard extends ConsumerWidget {
                       ),
                       BouncyButton(
                         onTap: () {
+                          widget.onAddToCartClick?.call(imageKey);
                           ref.read(cartProvider.notifier).addToCart(
                             CartItem(
-                              title: title,
-                              price: price,
-                              imagePath: imagePath,
+                              title: widget.title,
+                              price: widget.price,
+                              imagePath: widget.imagePath,
                             ),
                           );
                           ScaffoldMessenger.of(context).showSnackBar(

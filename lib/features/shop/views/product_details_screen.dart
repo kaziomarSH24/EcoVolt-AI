@@ -451,8 +451,8 @@ class _SpecItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 76,
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      constraints: const BoxConstraints(minWidth: 84),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -472,6 +472,7 @@ class _SpecItem extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
+            textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
