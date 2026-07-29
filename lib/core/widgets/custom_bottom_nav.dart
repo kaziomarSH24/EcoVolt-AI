@@ -20,7 +20,7 @@ class CustomBottomNav extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cartItems = ref.watch(cartProvider);
     final totalCartItems = cartItems.fold(0, (sum, item) => sum + item.quantity);
-    final totalFavoriteItems = ref.watch(favoriteProvider).length;
+    final totalFavoriteItems = ref.watch(favoriteProvider).value?.length ?? 0;
     final key = cartKey;
 
     return Container(

@@ -105,7 +105,7 @@ class CartScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              item.price,
+                              '৳${item.price.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,

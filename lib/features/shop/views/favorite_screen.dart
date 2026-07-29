@@ -12,7 +12,7 @@ class FavoriteScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final favoriteProducts = ref.watch(favoriteProvider);
+    final favoriteAsyncValue = ref.watch(favoriteProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -30,23 +30,30 @@ class FavoriteScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: favoriteProducts.isEmpty
-          ? _buildEmptyState(context)
-          : GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12).copyWith(bottom: 100),
-              physics: const BouncingScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.65,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 24,
-              ),
-              itemCount: favoriteProducts.length,
-              itemBuilder: (context, index) {
-                final product = favoriteProducts[index];
-                return _FavoriteProductCard(product: product);
-              },
+      body: favoriteAsyncValue.when(
+        data: (favoriteProducts) {
+          if (favoriteProducts.isEmpty) {
+            return _buildEmptyState(context);
+          }
+          return GridView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12).copyWith(bottom: 100),
+            physics: const BouncingScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.65,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 24,
             ),
+            itemCount: favoriteProducts.length,
+            itemBuilder: (context, index) {
+              final product = favoriteProducts[index];
+              return _FavoriteProductCard(product: product);
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+      ),
       bottomNavigationBar: const CustomBottomNav(currentIndex: 2), // Index 2 is Favorites
     );
   }

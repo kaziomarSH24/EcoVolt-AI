@@ -583,11 +583,11 @@ class _PremiumProductCardState extends ConsumerState<_PremiumProductCard> {
                       ),
                       child: Consumer(
                         builder: (context, ref, child) {
-                          final isFav = ref.watch(favoriteProvider).any((p) => p.title == widget.title);
+                          final isFavorite = ref.watch(favoriteProvider).value?.any((p) => p.title == widget.title) ?? false;
                           return Icon(
-                            isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                            isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                             size: 16,
-                            color: isFav ? Colors.red : AppColors.textSecondary,
+                            color: isFavorite ? Colors.red : AppColors.textSecondary,
                           );
                         },
                       ),
@@ -637,10 +637,12 @@ class _PremiumProductCardState extends ConsumerState<_PremiumProductCard> {
                     BouncyButton(
                       onTap: () {
                         widget.onAddToCartClick?.call(imageKey);
+                        final product = ref.read(productProvider).value?.firstWhere((p) => p.title == widget.title);
                         ref.read(cartProvider.notifier).addToCart(
                           CartItem(
+                            productId: product?.id ?? widget.title,
                             title: widget.title,
-                            price: widget.price,
+                            price: double.tryParse(widget.price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0,
                             imagePath: widget.imagePath,
                           ),
                         );

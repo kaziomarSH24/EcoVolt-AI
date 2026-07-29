@@ -444,11 +444,11 @@ class _ProductCardState extends ConsumerState<_ProductCard> {
                           child: Consumer(
                             builder: (context, ref, child) {
                               // We just use the title to check since our dummy provider is simple
-                              final isFav = ref.watch(favoriteProvider).any((p) => p.title == widget.title);
+                              final isFavorite = ref.watch(favoriteProvider).value?.any((p) => p.title == widget.title) ?? false;
                               return Icon(
-                                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                                 size: 14,
-                                color: isFav ? Colors.red : AppColors.textSecondary,
+                                color: isFavorite ? Colors.red : AppColors.textSecondary,
                               );
                             },
                           ),
@@ -494,10 +494,12 @@ class _ProductCardState extends ConsumerState<_ProductCard> {
                       BouncyButton(
                         onTap: () {
                           widget.onAddToCartClick?.call(imageKey);
+                          final product = ref.read(productProvider).value?.firstWhere((p) => p.title == widget.title);
                           ref.read(cartProvider.notifier).addToCart(
                             CartItem(
+                              productId: product?.id ?? widget.title,
                               title: widget.title,
-                              price: widget.price,
+                              price: double.tryParse(widget.price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0,
                               imagePath: widget.imagePath,
                             ),
                           );

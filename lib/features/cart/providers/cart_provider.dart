@@ -9,7 +9,7 @@ class CartNotifier extends Notifier<List<CartItem>> {
 
   void addToCart(CartItem newItem) {
     // Check if item already exists
-    final existingIndex = state.indexWhere((item) => item.title == newItem.title);
+    final existingIndex = state.indexWhere((item) => item.productId == newItem.productId);
     
     if (existingIndex >= 0) {
       // Increase quantity
@@ -23,8 +23,23 @@ class CartNotifier extends Notifier<List<CartItem>> {
     }
   }
 
-  void removeFromCart(String title) {
-    state = state.where((item) => item.title != title).toList();
+  void updateQuantity(String productId, int newQuantity) {
+    if (newQuantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+    
+    final existingIndex = state.indexWhere((item) => item.productId == productId);
+    if (existingIndex >= 0) {
+      final existingItem = state[existingIndex];
+      final updatedList = List<CartItem>.from(state);
+      updatedList[existingIndex] = existingItem.copyWith(quantity: newQuantity);
+      state = updatedList;
+    }
+  }
+
+  void removeFromCart(String productId) {
+    state = state.where((item) => item.productId != productId).toList();
   }
   
   int get totalItems {
@@ -33,10 +48,7 @@ class CartNotifier extends Notifier<List<CartItem>> {
 
   double get totalPrice {
     return state.fold(0.0, (sum, item) {
-      // Remove '$' and ',' if they exist, then parse to double
-      final cleanPrice = item.price.replaceAll('৳', '').replaceAll(',', '');
-      final priceValue = double.tryParse(cleanPrice) ?? 0.0;
-      return sum + (priceValue * item.quantity);
+      return sum + (item.price * item.quantity);
     });
   }
 

@@ -1,27 +1,63 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ecovolt_ai/features/shop/models/product_model.dart';
 import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
+import 'package:ecovolt_ai/features/shop/repositories/favorite_repository.dart';
 
-class FavoriteNotifier extends Notifier<List<ProductModel>> {
+class FavoriteNotifier extends AsyncNotifier<List<ProductModel>> {
   @override
-  List<ProductModel> build() {
-    return [];
+  Future<List<ProductModel>> build() async {
+    return _fetchFavorites();
   }
 
-  void toggleFavorite(ProductModel product) {
-    final isFavorite = state.any((p) => p.id == product.id);
+  Future<List<ProductModel>> _fetchFavorites() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return [];
+
+    final repository = ref.read(favoriteRepositoryProvider);
+    final favoriteIds = await repository.getFavoriteProductIds(user.id);
+    
+    // We need to get the actual product objects from the productProvider
+    // Wait for products to load if they haven't
+    final products = await ref.watch(productProvider.future);
+    
+    return products.where((p) => favoriteIds.contains(p.id)).toList();
+  }
+
+  Future<void> toggleFavorite(ProductModel product) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final repository = ref.read(favoriteRepositoryProvider);
+    final currentFavorites = state.value ?? [];
+    
+    final isFavorite = currentFavorites.any((p) => p.id == product.id);
+    
+    // Optimistic update
     if (isFavorite) {
-      state = state.where((p) => p.id != product.id).toList();
+      state = AsyncValue.data(currentFavorites.where((p) => p.id != product.id).toList());
     } else {
-      state = [...state, product];
+      state = AsyncValue.data([...currentFavorites, product]);
+    }
+
+    try {
+      if (isFavorite) {
+        await repository.removeFavorite(user.id, product.id);
+      } else {
+        await repository.addFavorite(user.id, product.id);
+      }
+    } catch (e) {
+      // Revert on failure
+      state = AsyncValue.data(currentFavorites);
+      rethrow;
     }
   }
 
   bool isFavorite(String productId) {
-    return state.any((p) => p.id == productId);
+    return state.value?.any((p) => p.id == productId) ?? false;
   }
 }
 
-final favoriteProvider = NotifierProvider<FavoriteNotifier, List<ProductModel>>(() {
+final favoriteProvider = AsyncNotifierProvider<FavoriteNotifier, List<ProductModel>>(() {
   return FavoriteNotifier();
 });

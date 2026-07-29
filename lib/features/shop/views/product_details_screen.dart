@@ -353,8 +353,9 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     // 2. Add to Provider State
     ref.read(cartProvider.notifier).addToCart(
       CartItem(
+        productId: widget.product['id'],
         title: widget.product['title'],
-        price: widget.product['price'],
+        price: (widget.product['price'] as num).toDouble(),
         imagePath: widget.product['imagePath'],
       ),
     );
