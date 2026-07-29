@@ -39,7 +39,15 @@ class ProfileNotifier extends AsyncNotifier<ProfileModel?> {
     final profile = await repository.getProfile(user.id);
     
     // Create basic profile in UI if missing from DB (should be handled by DB trigger)
-    return profile ?? ProfileModel(id: user.id);
+    // Also fallback to user metadata if the DB fields are null (e.g., from Google auth)
+    return ProfileModel(
+      id: user.id,
+      fullName: profile?.fullName ?? user.userMetadata?['full_name'] as String?,
+      avatarUrl: profile?.avatarUrl ?? user.userMetadata?['avatar_url'] as String?,
+      phone: profile?.phone,
+      address: profile?.address,
+      impactScore: profile?.impactScore ?? 0,
+    );
   }
 
   Future<void> updateProfile({

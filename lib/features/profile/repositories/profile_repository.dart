@@ -43,6 +43,7 @@ class ProfileRepository {
     }
 
     final updates = {
+      'id': userId, // Required for upsert
       if (fullName != null) 'full_name': fullName,
       if (phone != null) 'phone': phone,
       if (address != null) 'address': address,
@@ -50,8 +51,8 @@ class ProfileRepository {
       'updated_at': DateTime.now().toIso8601String(),
     };
 
-    if (updates.isNotEmpty) {
-      await _supabase.from('profiles').update(updates).eq('id', userId);
+    if (updates.length > 1) {
+      await _supabase.from('profiles').upsert(updates);
     }
   }
 }
