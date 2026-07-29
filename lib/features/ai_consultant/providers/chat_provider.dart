@@ -88,7 +88,7 @@ class ChatNotifier extends Notifier<ChatState> {
         'text': "Based on typical loads, a fan uses ~70W and a light uses ~15W. If you have 3 fans and 5 lights, your total load is around 285W. I recommend a 600VA IPS setup. Here is a great option for you:",
         'productData': {
           'title': 'EcoVolt 600VA Smart IPS',
-          'price': '\$120.00',
+          'price': '৳120.00',
           'imagePath': 'assets/images/ev1.png',
           'specs': 'Backup: 4 Hours • Battery: 12V 100Ah',
         }

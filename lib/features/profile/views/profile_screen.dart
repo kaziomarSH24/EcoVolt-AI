@@ -117,7 +117,7 @@ class ProfileScreen extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildStatCard('Active\nOrders', '3', Icons.local_shipping_outlined),
-          _buildStatCard('Total\nSpent', '\$850', Icons.account_balance_wallet_outlined),
+          _buildStatCard('Total\nSpent', '৳850', Icons.account_balance_wallet_outlined),
           _buildStatCard('Impact\nScore', '4.9', Icons.energy_savings_leaf_outlined, iconColor: Colors.green),
         ],
       ),

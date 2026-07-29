@@ -17,8 +17,8 @@ class _RoiCalculatorScreenState extends State<RoiCalculatorScreen> {
   
   // Results
   String _systemSize = '0 KW';
-  String _estimatedCost = '\$0';
-  String _yearlySavings = '\$0';
+  String _estimatedCost = '৳0';
+  String _yearlySavings = '৳0';
   String _roiYears = '0 Years';
 
   @override
@@ -44,8 +44,8 @@ class _RoiCalculatorScreenState extends State<RoiCalculatorScreen> {
 
     setState(() {
       _systemSize = '${size.toStringAsFixed(1)} KW';
-      _estimatedCost = '\$${cost.toStringAsFixed(0)}';
-      _yearlySavings = '\$${savings.toStringAsFixed(0)}';
+      _estimatedCost = '৳${cost.toStringAsFixed(0)}';
+      _yearlySavings = '৳${savings.toStringAsFixed(0)}';
       _roiYears = '${roi.toStringAsFixed(1)} Years';
       _isCalculated = true;
     });
@@ -170,7 +170,7 @@ class _RoiCalculatorScreenState extends State<RoiCalculatorScreen> {
             child: Row(
               children: [
                 const Text(
-                  '\$',
+                  '৳',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

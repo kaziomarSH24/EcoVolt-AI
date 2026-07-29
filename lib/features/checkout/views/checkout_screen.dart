@@ -264,7 +264,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                     )
                   : Text(
-                      'Place Order - \$${finalTotal.toStringAsFixed(2)}',
+                      'Place Order - ৳${finalTotal.toStringAsFixed(2)}',
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
             ),
@@ -408,9 +408,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       ),
       child: Column(
         children: [
-          _buildSummaryRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}'),
+          _buildSummaryRow('Subtotal', '৳${subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 12),
-          _buildSummaryRow('Shipping Fee', '\$${shipping.toStringAsFixed(2)}'),
+          _buildSummaryRow('Shipping Fee', '৳${shipping.toStringAsFixed(2)}'),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(height: 1),
@@ -423,7 +423,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
               Text(
-                '\$${total.toStringAsFixed(2)}',
+                '৳${total.toStringAsFixed(2)}',
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.primary),
               ),
             ],

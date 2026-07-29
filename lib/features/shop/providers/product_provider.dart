@@ -27,7 +27,7 @@ class ProductModel {
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     // We get numeric price from DB, so we format it back to String with $ sign.
     final num priceVal = json['price'] as num;
-    final formattedPrice = '\$${priceVal.toStringAsFixed(2)}';
+    final formattedPrice = '৳${priceVal.toStringAsFixed(2)}';
 
     return ProductModel(
       id: json['id'] as String,
