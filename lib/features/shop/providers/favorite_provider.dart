@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ecovolt_ai/features/shop/models/product_model.dart';
 import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
 
 class FavoriteNotifier extends Notifier<List<ProductModel>> {

@@ -8,6 +8,8 @@ import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/category_provider.dart';
+import 'package:ecovolt_ai/features/shop/models/product_model.dart';
+import 'package:ecovolt_ai/features/shop/models/category_model.dart';
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
 
 class ProductCatalogScreen extends ConsumerStatefulWidget {

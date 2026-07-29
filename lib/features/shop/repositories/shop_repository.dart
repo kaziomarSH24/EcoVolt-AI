@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/category_provider.dart';
+import 'package:ecovolt_ai/features/shop/models/product_model.dart';
+import 'package:ecovolt_ai/features/shop/models/category_model.dart';
 
 class ShopRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
