@@ -9,13 +9,11 @@ import 'package:ecovolt_ai/features/cart/models/cart_item.dart';
 class ProductDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> product;
 
-  const ProductDetailsScreen({
-    super.key,
-    required this.product,
-  });
+  const ProductDetailsScreen({super.key, required this.product});
 
   @override
-  ConsumerState<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
+  ConsumerState<ProductDetailsScreen> createState() =>
+      _ProductDetailsScreenState();
 }
 
 class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
@@ -30,9 +28,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
       height: 30,
       width: 30,
       opacity: 0.85,
-      dragAnimation: const DragToCartAnimationOptions(
-        rotation: true,
-      ),
+      dragAnimation: const DragToCartAnimationOptions(rotation: true),
       jumpAnimation: const JumpAnimationOptions(),
       createAddToCartAnimation: (runAddToCartAnimation) {
         this.runAddToCartAnimation = runAddToCartAnimation;
@@ -49,17 +45,28 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                   child: Container(
                     decoration: const BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(32),
+                      ),
                     ),
-                    padding: const EdgeInsets.only(top: 32, left: 24, right: 24, bottom: 120), // Extra bottom padding for fixed bar
+                    padding: const EdgeInsets.only(
+                      top: 32,
+                      left: 24,
+                      right: 24,
+                      bottom: 120,
+                    ), // Extra bottom padding for fixed bar
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildHeader(),
                         const SizedBox(height: 24),
-                        _buildSpecifications(widget.product['features'] as List<String>?),
+                        _buildSpecifications(
+                          widget.product['features'] as List<String>?,
+                        ),
                         const SizedBox(height: 32),
-                        _buildDescription(widget.product['description'] as String?),
+                        _buildDescription(
+                          widget.product['description'] as String?,
+                        ),
                         const SizedBox(height: 32),
                         _buildReviews(),
                       ],
@@ -77,7 +84,10 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
 
   Widget _buildSliverAppBar(BuildContext context) {
     final cartItems = ref.watch(cartProvider);
-    final totalCartItems = cartItems.fold(0, (sum, item) => sum + item.quantity);
+    final totalCartItems = cartItems.fold(
+      0,
+      (sum, item) => sum + item.quantity,
+    );
 
     return SliverAppBar(
       expandedHeight: 350.0,
@@ -98,7 +108,10 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
             ],
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: AppColors.textPrimary,
+            ),
             onPressed: () => context.pop(),
           ),
         ),
@@ -124,8 +137,13 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                 children: [
                   AddToCartIcon(
                     key: cartKey,
-                    icon: const Icon(Icons.shopping_cart_outlined, color: AppColors.textPrimary),
-                    badgeOptions: const BadgeOptions(active: false), // Use Riverpod badge instead
+                    icon: const Icon(
+                      Icons.shopping_cart_outlined,
+                      color: AppColors.textPrimary,
+                    ),
+                    badgeOptions: const BadgeOptions(
+                      active: false,
+                    ), // Use Riverpod badge instead
                   ),
                   if (totalCartItems > 0)
                     Positioned(
@@ -219,10 +237,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
             const SizedBox(width: 4),
             const Text(
               '4.9',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(width: 8),
             Text(
@@ -242,7 +257,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     if (features == null || features.isEmpty) {
       return const SizedBox.shrink(); // Hide if no features
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -263,8 +278,8 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
               return Padding(
                 padding: const EdgeInsets.only(right: 12.0),
                 child: _SpecItem(
-                  icon: Icons.check_circle_outline_rounded, 
-                  label: 'Feature', 
+                  icon: Icons.check_circle_outline_rounded,
+                  label: 'Feature',
                   value: feature,
                 ),
               );
@@ -279,7 +294,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     if (description == null || description.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -350,15 +365,31 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
   void _onAddToCartClick(GlobalKey widgetKey) async {
     // 1. Trigger Animation
     await runAddToCartAnimation(widgetKey);
+
     // 2. Add to Provider State
-    ref.read(cartProvider.notifier).addToCart(
-      CartItem(
-        productId: widget.product['id'],
-        title: widget.product['title'],
-        price: (widget.product['price'] as num).toDouble(),
-        imagePath: widget.product['imagePath'],
-      ),
-    );
+    final priceString = widget.product['price'].toString();
+    final parsedPrice =
+        double.tryParse(priceString.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+
+    ref
+        .read(cartProvider.notifier)
+        .addToCart(
+          CartItem(
+            productId: widget.product['id'],
+            title: widget.product['title'],
+            price: parsedPrice,
+            imagePath: widget.product['imagePath'],
+          ),
+        );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Added to cart'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   Widget _buildBottomBar(BuildContext context) {

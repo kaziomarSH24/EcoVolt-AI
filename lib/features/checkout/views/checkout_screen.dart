@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:app_links/app_links.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/features/cart/providers/cart_provider.dart';
+import 'package:ecovolt_ai/features/checkout/repositories/order_repository.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -17,6 +21,49 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   
   String addressTitle = 'Home';
   String addressDetails = '123 Eco Street, Green City\nState 12345';
+  
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  void _initDeepLinks() {
+    _appLinks = AppLinks();
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) async {
+      if (uri.scheme == 'io.supabase.ecovoltai') {
+        if (uri.host == 'payment-success') {
+          final sessionId = uri.queryParameters['session_id'];
+          if (sessionId != null) {
+            try {
+              if (mounted) setState(() { isProcessing = true; });
+              await ref.read(orderRepositoryProvider).confirmPayment(sessionId);
+              if (mounted) _showSuccessDialog();
+            } catch (e) {
+              if (mounted) {
+                setState(() { isProcessing = false; });
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Payment verification failed: $e')));
+              }
+            }
+          }
+        } else if (uri.host == 'payment-cancel') {
+          if (mounted) {
+            setState(() { isProcessing = false; });
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment was cancelled')));
+          }
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
 
   void _showEditAddressModal() {
     final titleController = TextEditingController(text: addressTitle);
@@ -94,12 +141,31 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       isProcessing = true;
     });
     
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 2));
-    
-    if (!mounted) return;
-    
-    // Clear cart and show success
+    try {
+      final cartItems = ref.read(cartProvider);
+      final totalAmount = ref.read(cartProvider.notifier).totalPrice;
+      
+      final checkoutUrl = await ref.read(orderRepositoryProvider).createOrderAndPaymentSession(
+        cartItems: cartItems,
+        totalAmount: totalAmount,
+        address: addressDetails,
+      );
+      
+      if (!await launchUrl(Uri.parse(checkoutUrl), mode: LaunchMode.inAppBrowserView)) {
+        throw Exception('Could not launch payment URL');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() { isProcessing = false; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  void _showSuccessDialog() {
+    setState(() { isProcessing = false; });
     ref.read(cartProvider.notifier).clearCart();
     
     showDialog(
