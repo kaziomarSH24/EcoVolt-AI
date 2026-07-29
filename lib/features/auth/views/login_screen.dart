@@ -269,8 +269,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                           // Google Login Button
                           BouncyButton(
-                            onTap: () {
-                              // TODO: Implement Google Login
+                            onTap: () async {
+                              try {
+                                await ref.read(authRepositoryProvider).signInWithGoogle();
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: $e')),
+                                  );
+                                }
+                              }
                             },
                             child: Container(
                               width: double.infinity,

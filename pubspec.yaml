@@ -41,6 +41,7 @@ dependencies:
   supabase_flutter: ^2.16.0
   flutter_dotenv: ^6.0.1
   pinput: ^6.0.2
+  image_picker: ^1.2.3
 
 dev_dependencies:
   flutter_test:

@@ -14,6 +14,7 @@ import 'package:ecovolt_ai/features/shop/views/product_details_screen.dart';
 import 'package:ecovolt_ai/features/checkout/views/checkout_screen.dart';
 import 'package:ecovolt_ai/features/cart/views/cart_screen.dart';
 import 'package:ecovolt_ai/features/profile/views/profile_screen.dart';
+import 'package:ecovolt_ai/features/profile/views/edit_profile_screen.dart';
 import 'package:ecovolt_ai/features/ai_consultant/views/ai_chat_screen.dart';
 import 'package:ecovolt_ai/features/orders/views/order_history_screen.dart';
 import 'package:ecovolt_ai/features/orders/views/order_tracking_screen.dart';
@@ -104,6 +105,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/edit-profile',
+        builder: (context, state) => const EditProfileScreen(),
       ),
       GoRoute(
         path: '/ai-chat',

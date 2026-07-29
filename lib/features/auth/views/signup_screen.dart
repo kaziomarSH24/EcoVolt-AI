@@ -261,6 +261,44 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                     ),
                                   ),
                             const SizedBox(height: 24),
+                            const SizedBox(height: 16),
+                            
+                            // Google Login Button
+                            BouncyButton(
+                              onTap: () async {
+                                try {
+                                  await ref.read(authRepositoryProvider).signInWithGoogle();
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Error: $e')),
+                                    );
+                                  }
+                                }
+                              },
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.2)),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/icons/google-logo.png',
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text('Continue with Google', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
 
                             // Login text
                             Row(

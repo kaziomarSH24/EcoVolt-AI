@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/core/widgets/custom_bottom_nav.dart';
 import 'package:ecovolt_ai/features/auth/providers/auth_provider.dart';
+import 'package:ecovolt_ai/features/profile/providers/profile_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -19,7 +20,7 @@ class ProfileScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 120), // Space for bottom nav
               child: Column(
                 children: [
-                  _buildHeader(),
+                  _buildHeader(ref),
                   const SizedBox(height: 24),
                   _buildStatsSection(),
                   const SizedBox(height: 32),
@@ -41,7 +42,15 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(WidgetRef ref) {
+    final profileState = ref.watch(profileProvider);
+    final user = ref.watch(currentUserProvider);
+    
+    final String fullName = profileState.value?.fullName ?? user?.userMetadata?['full_name'] ?? 'User';
+    final String initial = fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U';
+    final String email = user?.email ?? 'No email';
+    final String? avatarUrl = profileState.value?.avatarUrl;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
@@ -54,15 +63,19 @@ class ProfileScreen extends ConsumerWidget {
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.primary, width: 2),
             ),
-            child: const Center(
-              child: Text(
-                'KO',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
+            child: ClipOval(
+              child: avatarUrl != null
+                  ? Image.network(avatarUrl, fit: BoxFit.cover)
+                  : Center(
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
             ),
           ),
           const SizedBox(width: 20),
@@ -70,9 +83,9 @@ class ProfileScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Kazi Omar',
-                  style: TextStyle(
+                Text(
+                  fullName,
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
@@ -80,7 +93,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'kazi.omar@ecovolt.ai',
+                  email,
                   style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary.withValues(alpha: 0.8),
@@ -193,7 +206,11 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
           ),
-          _buildSettingsTile(icon: Icons.person_outline, title: 'Edit Profile'),
+          _buildSettingsTile(
+            icon: Icons.person_outline, 
+            title: 'Edit Profile',
+            onTap: () => context.push('/edit-profile'),
+          ),
           _buildSettingsTile(
             icon: Icons.history_rounded, 
             title: 'Order History',

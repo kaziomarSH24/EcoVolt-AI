@@ -44,6 +44,14 @@ class AuthRepository {
     await _supabase.auth.signOut();
   }
 
+  // Sign in with Google
+  Future<bool> signInWithGoogle() async {
+    return await _supabase.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: 'io.supabase.ecovoltai://login-callback/',
+    );
+  }
+
   // Get current user
   User? get currentUser => _supabase.auth.currentUser;
   
