@@ -283,8 +283,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Image.network(
-                                    'https://img.icons8.com/color/48/000000/google-logo.png',
+                                  Image.asset(
+                                    'assets/icons/google-logo.png',
                                     width: 24,
                                     height: 24,
                                   ),

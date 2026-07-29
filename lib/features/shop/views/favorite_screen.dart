@@ -140,10 +140,15 @@ class _FavoriteProductCard extends ConsumerWidget {
                     Center(
                       child: Hero(
                         tag: product.imagePath,
-                        child: Image.asset(
-                          product.imagePath,
-                          fit: BoxFit.contain,
-                        ),
+                        child: product.imagePath.startsWith('http')
+                            ? Image.network(
+                                product.imagePath,
+                                fit: BoxFit.contain,
+                              )
+                            : Image.asset(
+                                product.imagePath,
+                                fit: BoxFit.contain,
+                              ),
                       ),
                     ),
                     if (product.isBestSeller)

@@ -1,75 +1,55 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ecovolt_ai/features/shop/repositories/shop_repository.dart';
+
+import 'package:ecovolt_ai/features/shop/providers/category_provider.dart';
 
 class ProductModel {
   final String id;
   final String title;
-  final String category;
+  final CategoryModel? category;
   final String price;
   final String imagePath;
   final bool isBestSeller;
+  final String? description;
+  final List<String>? features;
 
   ProductModel({
     required this.id,
     required this.title,
-    required this.category,
+    this.category,
     required this.price,
     required this.imagePath,
     this.isBestSeller = false,
+    this.description,
+    this.features,
   });
-}
 
-class ProductNotifier extends Notifier<List<ProductModel>> {
-  @override
-  List<ProductModel> build() {
-    return [
-      ProductModel(
-        id: 'p1',
-        title: 'EcoVolt 1KW Solar Panel',
-        category: 'Solar',
-        price: '\$500.00',
-        imagePath: 'assets/images/ev3.png',
-        isBestSeller: true,
-      ),
-      ProductModel(
-        id: 'p2',
-        title: 'Smart Solar Inverter 2KVA',
-        category: 'Inverters',
-        price: '\$250.00',
-        imagePath: 'assets/images/ev2.png',
-      ),
-      ProductModel(
-        id: 'p3',
-        title: 'EcoVolt 600VA Smart IPS',
-        category: 'Inverters',
-        price: '\$120.00',
-        imagePath: 'assets/images/ev1.png',
-        isBestSeller: true,
-      ),
-      ProductModel(
-        id: 'p4',
-        title: 'Lithium Ion Battery 100Ah',
-        category: 'Batteries',
-        price: '\$350.00',
-        imagePath: 'assets/images/ev2.png',
-      ),
-      ProductModel(
-        id: 'p5',
-        title: 'Tubular Battery 200Ah',
-        category: 'Batteries',
-        price: '\$220.00',
-        imagePath: 'assets/images/ev1.png',
-      ),
-      ProductModel(
-        id: 'p6',
-        title: 'Hybrid Solar Controller',
-        category: 'Accessories',
-        price: '\$80.00',
-        imagePath: 'assets/images/ev3.png',
-      ),
-    ];
+  factory ProductModel.fromJson(Map<String, dynamic> json) {
+    // We get numeric price from DB, so we format it back to String with $ sign.
+    final num priceVal = json['price'] as num;
+    final formattedPrice = '\$${priceVal.toStringAsFixed(2)}';
+
+    return ProductModel(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      category: json['categories'] != null ? CategoryModel.fromJson(json['categories'] as Map<String, dynamic>) : null,
+      price: formattedPrice,
+      imagePath: json['imagePath'] ?? json['image_path'] as String,
+      isBestSeller: json['isBestSeller'] ?? json['is_best_seller'] as bool? ?? false,
+      description: json['description'] as String?,
+      features: (json['features'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+    );
   }
 }
 
-final productProvider = NotifierProvider<ProductNotifier, List<ProductModel>>(() {
+class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
+  @override
+  Future<List<ProductModel>> build() async {
+    return ref.watch(shopRepositoryProvider).getProducts();
+  }
+}
+
+final productProvider = AsyncNotifierProvider<ProductNotifier, List<ProductModel>>(() {
   return ProductNotifier();
 });
+

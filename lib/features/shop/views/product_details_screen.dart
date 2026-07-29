@@ -57,9 +57,9 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                       children: [
                         _buildHeader(),
                         const SizedBox(height: 24),
-                        _buildSpecifications(),
+                        _buildSpecifications(widget.product['features'] as List<String>?),
                         const SizedBox(height: 32),
-                        _buildDescription(),
+                        _buildDescription(widget.product['description'] as String?),
                         const SizedBox(height: 32),
                         _buildReviews(),
                       ],
@@ -163,10 +163,15 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                 tag: 'catalog_${widget.product['title']}',
                 child: Container(
                   key: _imageKey,
-                  child: Image.asset(
-                    widget.product['imagePath'],
-                    fit: BoxFit.contain,
-                  ),
+                  child: widget.product['imagePath'].startsWith('http')
+                      ? Image.network(
+                          widget.product['imagePath'],
+                          fit: BoxFit.contain,
+                        )
+                      : Image.asset(
+                          widget.product['imagePath'],
+                          fit: BoxFit.contain,
+                        ),
                 ),
               ),
             ),
@@ -233,7 +238,11 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     );
   }
 
-  Widget _buildSpecifications() {
+  Widget _buildSpecifications(List<String>? features) {
+    if (features == null || features.isEmpty) {
+      return const SizedBox.shrink(); // Hide if no features
+    }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -246,20 +255,31 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const _SpecItem(icon: Icons.bolt_rounded, label: 'Power', value: '5kW'),
-            const _SpecItem(icon: Icons.aspect_ratio_rounded, label: 'Size', value: '1.8m²'),
-            const _SpecItem(icon: Icons.shield_rounded, label: 'Warranty', value: '10 Yrs'),
-            const _SpecItem(icon: Icons.water_drop_rounded, label: 'IP', value: 'IP68'),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: features.map((feature) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: _SpecItem(
+                  icon: Icons.check_circle_outline_rounded, 
+                  label: 'Feature', 
+                  value: feature,
+                ),
+              );
+            }).toList(),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildDescription() {
+  Widget _buildDescription(String? description) {
+    if (description == null || description.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -273,7 +293,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Experience the next generation of renewable energy with the ${widget.product['title']}. Designed for maximum efficiency and durability, this panel ensures optimal performance even in low-light conditions. Its sleek design makes it perfect for modern homes.',
+          description,
           style: TextStyle(
             fontSize: 15,
             color: AppColors.textSecondary.withValues(alpha: 0.8),

@@ -7,6 +7,7 @@ import 'package:ecovolt_ai/features/cart/models/cart_item.dart';
 import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
+import 'package:ecovolt_ai/features/shop/providers/category_provider.dart';
 
 class ProductCatalogScreen extends ConsumerStatefulWidget {
   final String categoryName;
@@ -168,77 +169,90 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
   }
 
   Widget _buildCategoryPills() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: _categories.map((category) {
-          final isSelected = _selectedCategory == category;
-          return GestureDetector(
-            onTap: () => setState(() => _selectedCategory = category),
-            child: Container(
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected ? AppColors.primary : Colors.black.withValues(alpha: 0.05),
+    return ref.watch(categoryProvider).when(
+      data: (categories) {
+        final allCategories = ['All', ...categories.map((c) => c.name)];
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            children: allCategories.map((category) {
+              final isSelected = _selectedCategory == category;
+              return GestureDetector(
+                onTap: () => setState(() => _selectedCategory = category),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : Colors.black.withValues(alpha: 0.05),
+                    ),
+                  ),
+                  child: Text(
+                    category,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      color: isSelected ? Colors.white : AppColors.textSecondary,
+                    ),
+                  ),
                 ),
-              ),
-              child: Text(
-                category,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
+              );
+            }).toList(),
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, st) => const SizedBox.shrink(),
     );
   }
 
   Widget _buildProductList() {
-    final allProducts = ref.watch(productProvider);
-    
-    final filteredProducts = allProducts.where((product) {
-      final matchesSearch = product.title.toLowerCase().contains(_searchQuery);
-      final matchesCategory = _selectedCategory == 'All' || product.category == _selectedCategory;
-      return matchesSearch && matchesCategory;
-    }).toList();
+    final asyncProducts = ref.watch(productProvider);
 
     return Column(
       children: [
         _buildCategoryPills(),
         const SizedBox(height: 16),
         Expanded(
-          child: filteredProducts.isEmpty 
-              ? _buildEmptyState()
-              : GridView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  physics: const BouncingScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.65,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 24,
-                  ),
-                  itemCount: filteredProducts.length,
-                  itemBuilder: (context, index) {
-                    final product = filteredProducts[index];
-                    return _ProductCard(
-                      title: product.title,
-                      price: product.price,
-                      imagePath: product.imagePath,
-                      isBestSeller: product.isBestSeller,
-                      index: index,
-                    );
-                  },
+          child: asyncProducts.when(
+            data: (allProducts) {
+              final filteredProducts = allProducts.where((product) {
+                final matchesSearch = product.title.toLowerCase().contains(_searchQuery);
+                final matchesCategory = _selectedCategory == 'All' || product.category?.name == _selectedCategory;
+                return matchesSearch && matchesCategory;
+              }).toList();
+
+              if (filteredProducts.isEmpty) return _buildEmptyState();
+
+              return GridView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                physics: const BouncingScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.65,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 24,
                 ),
+                itemCount: filteredProducts.length,
+                itemBuilder: (context, index) {
+                  final product = filteredProducts[index];
+                  return _ProductCard(
+                    title: product.title,
+                    price: product.price,
+                    imagePath: product.imagePath,
+                    isBestSeller: product.isBestSeller,
+                    index: index,
+                  );
+                },
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, st) => Center(child: Text('Error: $e')),
+          ),
         ),
       ],
     );
@@ -297,6 +311,8 @@ class _ProductCard extends ConsumerWidget {
           'price': price,
           'imagePath': imagePath,
           'isBestSeller': isBestSeller,
+          'description': ref.read(productProvider).value?.firstWhere((p) => p.title == title).description,
+          'features': ref.read(productProvider).value?.firstWhere((p) => p.title == title).features,
         });
       },
       child: Container(
@@ -330,7 +346,9 @@ class _ProductCard extends ConsumerWidget {
                   Center(
                     child: Hero(
                       tag: 'catalog_$title', // unique tag
-                      child: Image.asset(imagePath, fit: BoxFit.contain),
+                      child: imagePath.startsWith('http')
+                          ? Image.network(imagePath, fit: BoxFit.contain)
+                          : Image.asset(imagePath, fit: BoxFit.contain),
                     ),
                   ),
                   if (isBestSeller)
@@ -362,13 +380,14 @@ class _ProductCard extends ConsumerWidget {
                       child: GestureDetector(
                         onTap: () {
                           // Find the product model
-                          final allProducts = ref.read(productProvider);
+                          final asyncProducts = ref.read(productProvider);
+                          final allProducts = asyncProducts.value ?? [];
                           final product = allProducts.firstWhere(
                             (p) => p.title == title,
                             orElse: () => ProductModel(
-                              id: 'unknown',
+                              id: title, // Use title for fallback unique ID
                               title: title,
-                              category: 'unknown',
+                              category: null,
                               price: price,
                               imagePath: imagePath,
                               isBestSeller: isBestSeller,

@@ -7,7 +7,9 @@ import 'package:ecovolt_ai/features/cart/models/cart_item.dart';
 import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 import 'package:ecovolt_ai/core/widgets/custom_bottom_nav.dart';
 import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
+import 'package:ecovolt_ai/features/shop/providers/category_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
+import 'package:ecovolt_ai/utils/icon_helper.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -45,9 +47,9 @@ class HomeScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildHeroSection(context),
-                        _buildCategoriesSection(context),
+                        _buildCategoriesSection(context, ref),
                         const SizedBox(height: 32),
-                        _buildPopularProductsSection(),
+                        _buildPopularProductsSection(context, ref),
                         const SizedBox(height: 120), // padding for bottom nav
                       ],
                     ),
@@ -249,7 +251,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCategoriesSection(BuildContext context) {
+  Widget _buildCategoriesSection(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -282,27 +284,35 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Row(
-            children: [
-              _CategoryPill(icon: Icons.solar_power_rounded, label: 'Solar', isSelected: true),
-              const SizedBox(width: 12),
-              _CategoryPill(icon: Icons.battery_charging_full_rounded, label: 'Batteries'),
-              const SizedBox(width: 12),
-              _CategoryPill(icon: Icons.power_rounded, label: 'Inverters'),
-              const SizedBox(width: 12),
-              _CategoryPill(icon: Icons.wind_power_rounded, label: 'Wind'),
-            ],
-          ),
+        ref.watch(categoryProvider).when(
+          data: (categories) {
+            if (categories.isEmpty) return const SizedBox.shrink();
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Row(
+                children: categories.map((cat) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    child: _CategoryPill(
+                      icon: IconHelper.getIcon(cat.iconName),
+                      label: cat.name,
+                      isSelected: false,
+                    ),
+                  );
+                }).toList(),
+              ),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Text('Error loading categories')),
         ),
       ],
     );
   }
 
-  Widget _buildPopularProductsSection() {
+  Widget _buildPopularProductsSection(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -319,35 +329,37 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Row(
-            children: [
-              _PremiumProductCard(
-                title: '5kW Mono-PERC Panel',
-                subtitle: 'High Efficiency',
-                price: '\$1,200',
-                imagePath: 'assets/images/ev1.png',
-                tag: 'Best Seller',
+        ref.watch(productProvider).when(
+          data: (products) {
+            final bestSellers = products.where((p) => p.isBestSeller).toList();
+            if (bestSellers.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text('No trending products at the moment.'),
+              );
+            }
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Row(
+                children: bestSellers.map((product) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 16.0),
+                    child: _PremiumProductCard(
+                      title: product.title,
+                      subtitle: product.category?.name ?? 'Unknown',
+                      price: product.price,
+                      imagePath: product.imagePath,
+                      tag: 'Best Seller',
+                    ),
+                  );
+                }).toList(),
               ),
-              const SizedBox(width: 16),
-              _PremiumProductCard(
-                title: '200Ah Lithium Pack',
-                subtitle: 'Deep Cycle',
-                price: '\$450',
-                imagePath: 'assets/images/ev2.png',
-              ),
-              const SizedBox(width: 16),
-              _PremiumProductCard(
-                title: '3kVA Smart IPS',
-                subtitle: 'Pure Sine Wave',
-                price: '\$300',
-                imagePath: 'assets/images/ev3.png',
-              ),
-            ],
-          ),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Text('Error loading products')),
         ),
       ],
     );
@@ -432,6 +444,8 @@ class _PremiumProductCard extends ConsumerWidget {
           'price': price,
           'imagePath': imagePath,
           'isBestSeller': tag == 'Best Seller',
+          'description': ref.read(productProvider).value?.firstWhere((p) => p.title == title).description,
+          'features': ref.read(productProvider).value?.firstWhere((p) => p.title == title).features,
         });
       },
       child: Container(
@@ -464,7 +478,9 @@ class _PremiumProductCard extends ConsumerWidget {
                 Center(
                   child: Hero(
                     tag: 'catalog_$title',
-                    child: Image.asset(imagePath, fit: BoxFit.contain),
+                    child: imagePath.startsWith('http')
+                        ? Image.network(imagePath, fit: BoxFit.contain)
+                        : Image.asset(imagePath, fit: BoxFit.contain),
                   ),
                 ),
                 if (tag != null)
@@ -492,13 +508,14 @@ class _PremiumProductCard extends ConsumerWidget {
                   right: 0,
                   child: GestureDetector(
                     onTap: () {
-                      final allProducts = ref.read(productProvider);
+                      final asyncProducts = ref.read(productProvider);
+                      final allProducts = asyncProducts.value ?? [];
                       final product = allProducts.firstWhere(
                         (p) => p.title == title,
                         orElse: () => ProductModel(
-                          id: 'unknown',
+                          id: title, // Use title as ID so each fallback is unique
                           title: title,
-                          category: 'unknown',
+                          category: null,
                           price: price,
                           imagePath: imagePath,
                           isBestSeller: tag == 'Best Seller',

@@ -237,7 +237,9 @@ class OrderTrackingScreen extends StatelessWidget {
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Image.asset(item.imagePath, fit: BoxFit.contain),
+                  child: item.imagePath.startsWith('http')
+                      ? Image.network(item.imagePath, fit: BoxFit.contain)
+                      : Image.asset(item.imagePath, fit: BoxFit.contain),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

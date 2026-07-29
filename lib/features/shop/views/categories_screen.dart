@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ecovolt_ai/features/shop/providers/category_provider.dart';
+import 'package:ecovolt_ai/utils/icon_helper.dart';
 
-class CategoriesScreen extends StatelessWidget {
+class CategoriesScreen extends ConsumerWidget {
   const CategoriesScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -27,61 +30,34 @@ class CategoriesScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: GridView.count(
-        padding: const EdgeInsets.all(24),
-        crossAxisCount: 2,
-        mainAxisSpacing: 20,
-        crossAxisSpacing: 20,
-        children: [
-          _buildCategoryCard(
-            context: context,
-            title: 'Solar Panels',
-            icon: Icons.solar_power_rounded,
-            itemCount: '24 items',
-            color: const Color(0xFFE8F5E9),
-            iconColor: Colors.green,
-          ),
-          _buildCategoryCard(
-            context: context,
-            title: 'Batteries',
-            icon: Icons.battery_charging_full_rounded,
-            itemCount: '12 items',
-            color: const Color(0xFFE3F2FD),
-            iconColor: Colors.blue,
-          ),
-          _buildCategoryCard(
-            context: context,
-            title: 'Inverters',
-            icon: Icons.power_rounded,
-            itemCount: '8 items',
-            color: const Color(0xFFFFF3E0),
-            iconColor: Colors.orange,
-          ),
-          _buildCategoryCard(
-            context: context,
-            title: 'Wind Energy',
-            icon: Icons.wind_power_rounded,
-            itemCount: '5 items',
-            color: const Color(0xFFF3E5F5),
-            iconColor: Colors.purple,
-          ),
-          _buildCategoryCard(
-            context: context,
-            title: 'Accessories',
-            icon: Icons.cable_rounded,
-            itemCount: '45 items',
-            color: const Color(0xFFECEFF1),
-            iconColor: Colors.blueGrey,
-          ),
-          _buildCategoryCard(
-            context: context,
-            title: 'EV Chargers',
-            icon: Icons.ev_station_rounded,
-            itemCount: '6 items',
-            color: const Color(0xFFFFEBEE),
-            iconColor: Colors.red,
-          ),
-        ],
+      body: ref.watch(categoryProvider).when(
+        data: (categories) {
+          if (categories.isEmpty) {
+            return const Center(child: Text('No categories found.'));
+          }
+          return GridView.builder(
+            padding: const EdgeInsets.all(24),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 20,
+              crossAxisSpacing: 20,
+            ),
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              final cat = categories[index];
+              return _buildCategoryCard(
+                context: context,
+                title: cat.name,
+                iconName: cat.iconName,
+                imageUrl: cat.imageUrl,
+                colorHex: cat.bgColorHex,
+                iconColorHex: cat.iconColorHex,
+              );
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );
   }
@@ -89,21 +65,24 @@ class CategoriesScreen extends StatelessWidget {
   Widget _buildCategoryCard({
     required BuildContext context,
     required String title,
-    required IconData icon,
-    required String itemCount,
-    required Color color,
-    required Color iconColor,
+    String? iconName,
+    String? imageUrl,
+    String? colorHex,
+    String? iconColorHex,
   }) {
+    final bgColor = IconHelper.getColorFromHex(colorHex, fallback: const Color(0xFFE8F5E9));
+    final iconColor = IconHelper.getColorFromHex(iconColorHex, fallback: Colors.green);
+
     return GestureDetector(
       onTap: () => context.push('/catalog'),
       child: Container(
         decoration: BoxDecoration(
-          color: color,
+          color: bgColor,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.5),
+              color: bgColor.withValues(alpha: 0.5),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -118,7 +97,9 @@ class CategoriesScreen extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 40, color: iconColor),
+              child: imageUrl != null && imageUrl.isNotEmpty
+                  ? Image.network(imageUrl, width: 40, height: 40, fit: BoxFit.contain)
+                  : Icon(IconHelper.getIcon(iconName), size: 40, color: iconColor),
             ),
             const SizedBox(height: 16),
             Text(
@@ -128,10 +109,11 @@ class CategoriesScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             Text(
-              itemCount,
+              'View items', // Or compute item count if desired
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.textSecondary.withValues(alpha: 0.7),
