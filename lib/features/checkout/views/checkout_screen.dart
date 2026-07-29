@@ -9,7 +9,9 @@ import 'package:ecovolt_ai/features/cart/providers/cart_provider.dart';
 import 'package:ecovolt_ai/features/checkout/repositories/order_repository.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
-  const CheckoutScreen({super.key});
+  final String? sessionId;
+  
+  const CheckoutScreen({super.key, this.sessionId});
 
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -29,6 +31,26 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   void initState() {
     super.initState();
     _initDeepLinks();
+    
+    // Process deep link from GoRouter if present
+    if (widget.sessionId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _processPaymentFromRouter(widget.sessionId!);
+      });
+    }
+  }
+
+  void _processPaymentFromRouter(String sessionId) async {
+    try {
+      if (mounted) setState(() { isProcessing = true; });
+      await ref.read(orderRepositoryProvider).confirmPayment(sessionId);
+      if (mounted) _showSuccessDialog();
+    } catch (e) {
+      if (mounted) {
+        setState(() { isProcessing = false; });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Payment verification failed: $e')));
+      }
+    }
   }
 
   void _initDeepLinks() {

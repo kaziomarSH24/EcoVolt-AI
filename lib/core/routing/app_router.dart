@@ -99,6 +99,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CheckoutScreen(),
       ),
       GoRoute(
+        path: '/payment-success',
+        builder: (context, state) {
+          final sessionId = state.uri.queryParameters['session_id'];
+          return CheckoutScreen(sessionId: sessionId);
+        },
+      ),
+      GoRoute(
+        path: '/payment-cancel',
+        builder: (context, state) => const CheckoutScreen(),
+      ),
+      GoRoute(
         path: '/cart',
         builder: (context, state) => const CartScreen(),
       ),
