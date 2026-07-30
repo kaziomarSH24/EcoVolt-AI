@@ -8,6 +8,8 @@ import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/features/cart/providers/cart_provider.dart';
 import 'package:ecovolt_ai/features/checkout/repositories/order_repository.dart';
 import 'package:ecovolt_ai/features/orders/providers/order_history_provider.dart';
+import '../../profile/providers/address_provider.dart';
+import '../../profile/models/address_model.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   final String? sessionId;
@@ -22,8 +24,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String selectedPaymentMethod = 'Credit Card';
   bool isProcessing = false;
   
-  String addressTitle = 'Home';
-  String addressDetails = '123 Eco Street, Green City\nState 12345';
+  AddressModel? _selectedAddress;
   
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
@@ -88,10 +89,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     super.dispose();
   }
 
-  void _showEditAddressModal() {
-    final titleController = TextEditingController(text: addressTitle);
-    final detailsController = TextEditingController(text: addressDetails);
-
+  void _showAddressSelectionModal(List<AddressModel> addresses) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -101,57 +99,70 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       ),
       builder: (context) {
         return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 24,
-            right: 24,
-            top: 24,
-          ),
+          padding: const EdgeInsets.only(top: 24, bottom: 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Edit Address',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(
-                  labelText: 'Address Title (e.g. Home, Office)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  'Select Shipping Address',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: detailsController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Full Address',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      addressTitle = titleController.text.isNotEmpty ? titleController.text : 'Home';
-                      addressDetails = detailsController.text.isNotEmpty ? detailsController.text : 'No address provided';
-                    });
-                    context.pop();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              if (addresses.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: Text('No addresses found. Please add one in Profile.'),
+                )
+              else
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: addresses.length,
+                    itemBuilder: (ctx, index) {
+                      final address = addresses[index];
+                      final isSelected = _selectedAddress?.id == address.id;
+                      
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                        tileColor: isSelected ? AppColors.primary.withValues(alpha: 0.05) : null,
+                        leading: const Icon(Icons.location_on, color: AppColors.primary),
+                        title: Text(address.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('${address.addressLine}\\n${address.city}, ${address.zipCode}'),
+                        trailing: isSelected ? const Icon(Icons.check_circle, color: AppColors.primary) : null,
+                        onTap: () {
+                          setState(() {
+                            _selectedAddress = address;
+                          });
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
                   ),
-                  child: const Text('Save Address', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
-              ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.push('/addresses');
+                    },
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    label: const Text('Manage Addresses', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              )
             ],
           ),
         );
@@ -171,7 +182,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final checkoutUrl = await ref.read(orderRepositoryProvider).createOrderAndPaymentSession(
         cartItems: cartItems,
         totalAmount: totalAmount,
-        address: addressDetails,
+        address: _selectedAddress != null 
+            ? '${_selectedAddress!.addressLine}, ${_selectedAddress!.city}, ${_selectedAddress!.zipCode}'
+            : 'No Address Selected',
       );
       
       if (!await launchUrl(Uri.parse(checkoutUrl), mode: LaunchMode.externalApplication)) {
@@ -255,6 +268,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final addressesState = ref.watch(addressesProvider);
+    List<AddressModel> savedAddresses = [];
+    
+    addressesState.whenData((addresses) {
+      savedAddresses = addresses;
+      if (_selectedAddress == null && addresses.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _selectedAddress == null) {
+            setState(() {
+              _selectedAddress = addresses.firstWhere((a) => a.isDefault, orElse: () => addresses.first);
+            });
+          }
+        });
+      }
+    });
+
     final cartItems = ref.watch(cartProvider);
     final totalPrice = ref.read(cartProvider.notifier).totalPrice;
     final shippingFee = 15.0;
@@ -290,7 +319,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           children: [
             _buildSectionTitle('Shipping Address'),
             const SizedBox(height: 16),
-            _buildShippingCard(),
+            _buildShippingAddressCard(savedAddresses),
             
             const SizedBox(height: 32),
             _buildSectionTitle('Payment Method'),
@@ -375,7 +404,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  Widget _buildShippingCard() {
+  Widget _buildShippingAddressCard(List<AddressModel> savedAddresses) {
+    String displayTitle = 'No Address Selected';
+    String displayDetails = 'Please add a shipping address';
+    
+    if (_selectedAddress != null) {
+      displayTitle = _selectedAddress!.title;
+      displayDetails = '${_selectedAddress!.addressLine}\n${_selectedAddress!.city}, ${_selectedAddress!.zipCode}\n${_selectedAddress!.phone}';
+    }
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -400,12 +436,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  addressTitle,
+                  displayTitle,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  addressDetails,
+                  displayDetails,
                   style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), height: 1.4),
                 ),
               ],
@@ -413,7 +449,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.edit_rounded, color: AppColors.primary, size: 20),
-            onPressed: _showEditAddressModal,
+            onPressed: () => _showAddressSelectionModal(savedAddresses),
           ),
         ],
       ),

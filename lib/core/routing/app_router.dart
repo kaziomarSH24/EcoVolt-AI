@@ -7,6 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/auth/views/splash_screen.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/signup_screen.dart';
+import '../../features/profile/views/profile_screen.dart';
+import '../../features/profile/views/address_list_screen.dart';
 import '../../features/home/views/home_screen.dart';
 import 'package:ecovolt_ai/features/shop/views/product_catalog_screen.dart';
 import 'package:ecovolt_ai/features/shop/views/categories_screen.dart';
@@ -143,6 +145,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/favorites',
         builder: (context, state) => const FavoriteScreen(),
+      ),
+      GoRoute(
+        path: '/addresses',
+        builder: (context, state) => const AddressListScreen(),
       ),
     ],
   );

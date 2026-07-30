@@ -230,7 +230,11 @@ class ProfileScreen extends ConsumerWidget {
             title: 'Order History',
             onTap: () => context.push('/orders'),
           ),
-          _buildSettingsTile(icon: Icons.location_on_outlined, title: 'Shipping Addresses'),
+          _buildSettingsTile(
+            icon: Icons.location_on_outlined, 
+            title: 'Shipping Addresses',
+            onTap: () => context.push('/addresses'),
+          ),
           _buildSettingsTile(icon: Icons.credit_card_outlined, title: 'Payment Methods'),
           
           const Padding(
