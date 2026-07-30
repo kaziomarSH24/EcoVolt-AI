@@ -7,6 +7,7 @@ import 'package:ecovolt_ai/features/cart/models/cart_item.dart';
 import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 import 'package:ecovolt_ai/core/widgets/custom_bottom_nav.dart';
 import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
+import 'package:ecovolt_ai/features/profile/providers/profile_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/category_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
 import 'package:ecovolt_ai/utils/icon_helper.dart';
@@ -26,6 +27,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profileState = ref.watch(profileProvider);
+    final avatarUrl = profileState.value?.avatarUrl;
+
     // Light & Clean Premium UI
     return AddToCartAnimation(
       cartKey: cartKey,
@@ -59,7 +63,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             bottom: false,
             child: Column(
               children: [
-                _buildAppBar(),
+                _buildAppBar(avatarUrl),
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
@@ -92,7 +96,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _buildAppBar(String? avatarUrl) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
       child: Row(
@@ -131,10 +135,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 onPressed: () {},
               ),
               const SizedBox(width: 8),
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 18,
                 backgroundColor: AppColors.surface,
-                backgroundImage: AssetImage('assets/images/avatar.jpg'),
+                backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+                    ? NetworkImage(avatarUrl)
+                    : const AssetImage('assets/images/avatar.jpg') as ImageProvider,
               ),
             ],
           )
