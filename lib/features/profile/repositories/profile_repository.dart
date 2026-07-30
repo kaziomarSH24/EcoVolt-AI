@@ -44,10 +44,10 @@ class ProfileRepository {
 
     final updates = {
       'id': userId, // Required for upsert
-      if (fullName != null) 'full_name': fullName,
-      if (phone != null) 'phone': phone,
-      if (address != null) 'address': address,
-      if (avatarUrl != null) 'avatar_url': avatarUrl,
+      'full_name': ?fullName,
+      'phone': ?phone,
+      'address': ?address,
+      'avatar_url': ?avatarUrl,
       'updated_at': DateTime.now().toIso8601String(),
     };
 

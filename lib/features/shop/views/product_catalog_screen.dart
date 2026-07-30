@@ -9,7 +9,6 @@ import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/category_provider.dart';
 import 'package:ecovolt_ai/features/shop/models/product_model.dart';
-import 'package:ecovolt_ai/features/shop/models/category_model.dart';
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
 
 class ProductCatalogScreen extends ConsumerStatefulWidget {
@@ -31,7 +30,6 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
   final GlobalKey<CartIconKey> cartKey = GlobalKey<CartIconKey>();
   late Function(GlobalKey) runAddToCartAnimation;
 
-  final List<String> _categories = ['All', 'Solar', 'Batteries', 'Inverters', 'Accessories'];
 
   @override
   void initState() {
@@ -93,7 +91,7 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
       ),
       title: const Text(
         'Catalog',
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.bold,
           fontSize: 22,

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/core/widgets/custom_bottom_nav.dart';
 import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
-import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
 import 'package:ecovolt_ai/features/shop/models/product_model.dart';
 
 class FavoriteScreen extends ConsumerWidget {

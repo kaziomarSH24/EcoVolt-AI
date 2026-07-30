@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ecovolt_ai/features/shop/models/product_model.dart';
 
 class FavoriteRepository {
   final SupabaseClient _supabase = Supabase.instance.client;

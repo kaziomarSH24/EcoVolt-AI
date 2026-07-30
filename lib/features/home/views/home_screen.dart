@@ -11,8 +11,6 @@ import 'package:ecovolt_ai/features/shop/providers/category_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
 import 'package:ecovolt_ai/utils/icon_helper.dart';
 import 'package:ecovolt_ai/features/shop/models/product_model.dart';
-import 'package:ecovolt_ai/features/shop/models/category_model.dart';
-
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -418,6 +416,7 @@ class _CategoryPill extends StatelessWidget {
     this.isSelected = false,
   });
 
+  @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),

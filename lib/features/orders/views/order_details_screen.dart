@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import '../models/order_model.dart';
@@ -125,7 +124,7 @@ class OrderDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${order.id.substring(0, 8).toUpperCase()}',
+                    order.id.substring(0, 8).toUpperCase(),
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                   const SizedBox(height: 16),
