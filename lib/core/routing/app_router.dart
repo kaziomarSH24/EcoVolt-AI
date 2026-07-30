@@ -79,10 +79,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
-        path: '/catalog',
+        path: '/products',
         builder: (context, state) {
-          final categoryName = state.extra as String?;
-          return ProductCatalogScreen(categoryName: categoryName ?? 'All');
+          if (state.extra is Map<String, dynamic>) {
+            final args = state.extra as Map<String, dynamic>;
+            return ProductCatalogScreen(
+              categoryName: args['categoryName'] as String? ?? 'All',
+              searchQuery: args['searchQuery'] as String?,
+            );
+          } else if (state.extra is String) {
+            return ProductCatalogScreen(categoryName: state.extra as String);
+          }
+          return const ProductCatalogScreen();
         },
       ),
       GoRoute(

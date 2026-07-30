@@ -23,7 +23,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final GlobalKey<CartIconKey> cartKey = GlobalKey<CartIconKey>();
+  final TextEditingController _searchController = TextEditingController();
   late Function(GlobalKey) runAddToCartAnimation;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -196,6 +203,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: TextField(
+                    controller: _searchController,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (query) {
+                      if (query.trim().isNotEmpty) {
+                        context.push('/products', extra: {'searchQuery': query.trim()});
+                      } else {
+                        context.push('/products');
+                      }
+                    },
                     decoration: InputDecoration(
                       hintText: 'Search panels, inverters...',
                       hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5), fontSize: 15),
@@ -203,13 +219,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                GestureDetector(
+                  onTap: () {
+                    final query = _searchController.text.trim();
+                    if (query.isNotEmpty) {
+                      context.push('/products', extra: {'searchQuery': query});
+                    } else {
+                      context.push('/products');
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.search_rounded, color: Colors.white, size: 20),
                   ),
-                  child: const Icon(Icons.tune_rounded, color: AppColors.primary, size: 20),
                 )
               ],
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
+import 'package:intl/intl.dart';
 
 class RoiCalculatorScreen extends StatefulWidget {
   const RoiCalculatorScreen({super.key});
@@ -34,18 +35,26 @@ class _RoiCalculatorScreenState extends State<RoiCalculatorScreen> {
     final billAmount = double.tryParse(billText) ?? 0.0;
     if (billAmount <= 0) return;
 
-    // Dummy Calculation Logic
-    // Assuming $1 = 5 KWh, $50 bill = 250 KWh/month
-    // Rough estimate: System size in KW = (billAmount / 30) 
-    double size = (billAmount / 25).clamp(1.0, 20.0);
-    double cost = size * 1000; // $1000 per KW approx
-    double savings = billAmount * 12; // Yearly savings
+    // Realistic Calculation for Bangladesh
+    // Avg electricity cost: ~8.5 BDT per KWh
+    // 1 KW system produces ~120 KWh per month
+    double monthlyKWh = billAmount / 8.5;
+    double size = (monthlyKWh / 120).clamp(1.0, 100.0); // System size in KW
+    
+    // Avg installation cost per KW is ~90,000 BDT
+    double cost = size * 90000; 
+    
+    // Yearly savings
+    double savings = billAmount * 12; 
+    
     double roi = cost / savings;
+
+    final currencyFormatter = NumberFormat('#,##,###', 'en_US');
 
     setState(() {
       _systemSize = '${size.toStringAsFixed(1)} KW';
-      _estimatedCost = '৳${cost.toStringAsFixed(0)}';
-      _yearlySavings = '৳${savings.toStringAsFixed(0)}';
+      _estimatedCost = '৳${currencyFormatter.format(cost)}';
+      _yearlySavings = '৳${currencyFormatter.format(savings)}';
       _roiYears = '${roi.toStringAsFixed(1)} Years';
       _isCalculated = true;
     });

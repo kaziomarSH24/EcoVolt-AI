@@ -13,10 +13,12 @@ import 'package:add_to_cart_animation/add_to_cart_animation.dart';
 
 class ProductCatalogScreen extends ConsumerStatefulWidget {
   final String categoryName;
+  final String? searchQuery;
 
   const ProductCatalogScreen({
     super.key,
     this.categoryName = 'All',
+    this.searchQuery,
   });
 
   @override
@@ -34,6 +36,11 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty) {
+      _searchQuery = widget.searchQuery!.toLowerCase();
+      _searchController.text = widget.searchQuery!;
+    }
+    
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
@@ -137,6 +144,91 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
     );
   }
 
+  void _showFilterModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Filters',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Text('Sort By', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                children: ['Popular', 'Newest', 'Price: Low to High', 'Price: High to Low'].map((sortOption) {
+                  return ChoiceChip(
+                    label: Text(sortOption),
+                    selected: sortOption == 'Popular', // Dummy selected state
+                    onSelected: (bool selected) {},
+                    selectedColor: AppColors.primary,
+                    labelStyle: TextStyle(
+                      color: sortOption == 'Popular' ? Colors.white : AppColors.textPrimary,
+                      fontWeight: sortOption == 'Popular' ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle_outline, color: Colors.white),
+                            SizedBox(width: 12),
+                            Expanded(child: Text('Filters applied', style: TextStyle(fontWeight: FontWeight.bold))),
+                          ],
+                        ),
+                        backgroundColor: AppColors.primary,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        margin: const EdgeInsets.all(16),
+                        elevation: 6,
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Apply Filters', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+              ),
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildSearchAndFilter() {
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -172,14 +264,17 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+          GestureDetector(
+            onTap: _showFilterModal,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+              ),
+              child: const Icon(Icons.tune_rounded, color: AppColors.textPrimary, size: 22),
             ),
-            child: const Icon(Icons.tune_rounded, color: AppColors.textPrimary, size: 22),
           ),
         ],
       ),
