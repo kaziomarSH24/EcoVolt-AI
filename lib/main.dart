@@ -73,6 +73,7 @@ class EcoVoltApp extends ConsumerWidget {
           PointerDeviceKind.mouse,
           PointerDeviceKind.touch,
           PointerDeviceKind.stylus,
+          PointerDeviceKind.trackpad,
           PointerDeviceKind.unknown,
         },
       ),

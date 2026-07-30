@@ -7,6 +7,7 @@ import 'package:app_links/app_links.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/features/cart/providers/cart_provider.dart';
 import 'package:ecovolt_ai/features/checkout/repositories/order_repository.dart';
+import 'package:ecovolt_ai/features/orders/providers/order_history_provider.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   final String? sessionId;
@@ -189,6 +190,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   void _showSuccessDialog() {
     setState(() { isProcessing = false; });
     ref.read(cartProvider.notifier).clearCart();
+    ref.invalidate(orderHistoryProvider);
     
     showDialog(
       context: context,
