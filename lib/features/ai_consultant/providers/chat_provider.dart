@@ -127,20 +127,37 @@ For example, if you recommend a product with ID 12345, you must write: [PRODUCT:
             ])
           : Content.text(text);
 
-      final response = await _chatSession!.sendMessage(content);
-      final responseText =
-          response.text ?? "দুঃখিত, আমি আপনার কথা বুঝতে পারিনি।";
+      final stream = _chatSession!.sendMessageStream(content);
 
-      final aiMessage = ChatMessage(
-        text: responseText,
+      // Create an initial empty AI message
+      var aiMessage = ChatMessage(
+        text: "",
         isUser: false,
         timestamp: DateTime.now(),
       );
 
+      // Add the empty message and turn off typing indicator
       state = state.copyWith(
         messages: [...state.messages, aiMessage],
         isTyping: false,
       );
+
+      // Listen to the stream and update the message piece by piece
+      await for (final chunk in stream) {
+        if (chunk.text != null) {
+          aiMessage = ChatMessage(
+            text: aiMessage.text + chunk.text!,
+            isUser: false,
+            timestamp: aiMessage.timestamp,
+          );
+          
+          // Update the last message in the list
+          final updatedMessages = List<ChatMessage>.from(state.messages);
+          updatedMessages[updatedMessages.length - 1] = aiMessage;
+          
+          state = state.copyWith(messages: updatedMessages);
+        }
+      }
     } catch (e) {
       final errorMessage = ChatMessage(
         text: "Error: ${e.toString()}",
