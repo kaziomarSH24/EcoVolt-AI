@@ -45,7 +45,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     redirect: (context, state) {
       final isLoggedIn = Supabase.instance.client.auth.currentUser != null;
-      final isLoggingIn = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
+      final isLoggingIn = state.matchedLocation == '/login' || state.matchedLocation == '/signup' || state.matchedLocation == '/forgot-password';
       final isOtpVerifying = state.matchedLocation == '/otp-verify';
 
       if (!isLoggedIn && !isLoggingIn && !isOtpVerifying && state.matchedLocation != '/') {
