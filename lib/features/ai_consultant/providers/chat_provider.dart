@@ -80,8 +80,9 @@ IMPORTANT INSTRUCTIONS FOR RECOMMENDING PRODUCTS:
 3. If you recommend a specific product, you MUST format it exactly like this in your response:
 [PRODUCT:product_id_here]
 For example, if you recommend a product with ID 12345, you must write: [PRODUCT:12345]. 
-4. Do NOT use markdown links for products. ONLY use the exact [PRODUCT:id] syntax. The app will automatically convert this syntax into a beautiful UI card.
-5. Keep your responses concise, helpful, and friendly. Use bullet points for load calculations to make it easy to read.
+4. CRITICAL: NEVER place the [PRODUCT:id] syntax inside a Markdown table or next to pipes (|). It will break the UI. ALWAYS put [PRODUCT:id] on a completely new line by itself.
+5. Do NOT use markdown links for products. ONLY use the exact [PRODUCT:id] syntax. The app will automatically convert this syntax into a beautiful UI card.
+6. Keep your responses concise, helpful, and friendly. Use bullet points for load calculations to make it easy to read.
 ''';
 
     final model = GenerativeModel(
@@ -129,18 +130,13 @@ For example, if you recommend a product with ID 12345, you must write: [PRODUCT:
 
       final stream = _chatSession!.sendMessageStream(content);
 
-      // Create an initial empty AI message
       var aiMessage = ChatMessage(
         text: "",
         isUser: false,
         timestamp: DateTime.now(),
       );
 
-      // Add the empty message and turn off typing indicator
-      state = state.copyWith(
-        messages: [...state.messages, aiMessage],
-        isTyping: false,
-      );
+      bool isFirstChunk = true;
 
       // Listen to the stream and update the message piece by piece
       await for (final chunk in stream) {
@@ -151,11 +147,19 @@ For example, if you recommend a product with ID 12345, you must write: [PRODUCT:
             timestamp: aiMessage.timestamp,
           );
           
-          // Update the last message in the list
-          final updatedMessages = List<ChatMessage>.from(state.messages);
-          updatedMessages[updatedMessages.length - 1] = aiMessage;
-          
-          state = state.copyWith(messages: updatedMessages);
+          if (isFirstChunk) {
+            // Add the first message and turn off typing indicator
+            state = state.copyWith(
+              messages: [...state.messages, aiMessage],
+              isTyping: false,
+            );
+            isFirstChunk = false;
+          } else {
+            // Update the last message in the list
+            final updatedMessages = List<ChatMessage>.from(state.messages);
+            updatedMessages[updatedMessages.length - 1] = aiMessage;
+            state = state.copyWith(messages: updatedMessages);
+          }
         }
       }
     } catch (e) {
