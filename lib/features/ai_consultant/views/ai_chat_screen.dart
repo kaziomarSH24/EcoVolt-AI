@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter/services.dart';
+import 'package:super_clipboard/super_clipboard.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 import 'package:ecovolt_ai/features/ai_consultant/providers/chat_provider.dart';
@@ -20,7 +22,63 @@ class AiChatScreen extends ConsumerStatefulWidget {
 class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  late final FocusNode _focusNode;
   Uint8List? _selectedImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode(
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.enter) {
+            if (HardwareKeyboard.instance.isShiftPressed) {
+              return KeyEventResult.ignored;
+            } else {
+              _handleSend();
+              return KeyEventResult.handled;
+            }
+          }
+          if (event.logicalKey == LogicalKeyboardKey.keyV &&
+              (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed)) {
+            _handlePaste();
+            return KeyEventResult.ignored;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+    );
+  }
+
+  Future<void> _handlePaste() async {
+    final clipboard = SystemClipboard.instance;
+    if (clipboard == null) return;
+    
+    final reader = await clipboard.read();
+    if (reader.canProvide(Formats.jpeg)) {
+      reader.getFile(Formats.jpeg, (file) async {
+        final bytes = await file.readAll();
+        setState(() {
+          _selectedImage = bytes;
+        });
+      });
+    } else if (reader.canProvide(Formats.png)) {
+      reader.getFile(Formats.png, (file) async {
+        final bytes = await file.readAll();
+        setState(() {
+          _selectedImage = bytes;
+        });
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _scrollController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -244,9 +302,11 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
                 ),
                 child: TextField(
                   controller: _textController,
+                  focusNode: _focusNode,
                   minLines: 1,
                   maxLines: 5,
                   keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
                   decoration: InputDecoration(
                     hintText: 'Ask about solar, IPS, loads...',
                     hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
@@ -286,12 +346,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    _textController.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
+
 }
 
 class _MessageBubble extends ConsumerWidget {
@@ -504,70 +559,49 @@ class _MessageBubble extends ConsumerWidget {
 }
 
 
-class _TypingIndicator extends StatelessWidget {
+class _TypingIndicator extends StatefulWidget {
   const _TypingIndicator();
+
+  @override
+  State<_TypingIndicator> createState() => _TypingIndicatorState();
+}
+
+class _TypingIndicatorState extends State<_TypingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+    
+    _animation = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.1),
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-            bottomLeft: Radius.circular(4),
-            bottomRight: Radius.circular(20),
+      child: FadeTransition(
+        opacity: _animation,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _Dot(delay: 0),
-            const SizedBox(width: 4),
-            _Dot(delay: 200),
-            const SizedBox(width: 4),
-            _Dot(delay: 400),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Dot extends StatefulWidget {
-  final int delay;
-  const _Dot({required this.delay});
-
-  @override
-  State<_Dot> createState() => _DotState();
-}
-
-class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 600))..repeat(reverse: true);
-    Future.delayed(Duration(milliseconds: widget.delay), () {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _controller,
-      child: Container(
-        width: 8,
-        height: 8,
-        decoration: const BoxDecoration(
-          color: AppColors.primary,
-          shape: BoxShape.circle,
+          child: const Icon(
+            Icons.smart_toy_rounded,
+            color: AppColors.primary,
+            size: 24,
+          ),
         ),
       ),
     );

@@ -35,6 +35,11 @@ class ChatState {
 
 class ChatNotifier extends Notifier<ChatState> {
   ChatSession? _chatSession;
+  final List<String> _availableModels = [
+    'gemini-3.5-flash',
+    'gemini-3.6-flash',
+  ];
+  int _currentModelIndex = 0;
 
   @override
   ChatState build() {
@@ -51,7 +56,7 @@ class ChatNotifier extends Notifier<ChatState> {
     );
   }
 
-  void _initChatSession() {
+  void _initChatSession({Iterable<Content>? history}) {
     final apiKey = dotenv.env['GEMINI_API_KEY'];
     if (apiKey == null ||
         apiKey.isEmpty ||
@@ -86,12 +91,12 @@ For example, if you recommend a product with ID 12345, you must write: [PRODUCT:
 ''';
 
     final model = GenerativeModel(
-      model: 'gemini-3.5-flash',
+      model: _availableModels[_currentModelIndex],
       apiKey: apiKey,
       systemInstruction: Content.system(systemInstruction),
     );
 
-    _chatSession = model.startChat();
+    _chatSession = model.startChat(history: history?.toList());
   }
 
   Future<void> sendMessage(String text, {Uint8List? imageBytes}) async {
@@ -110,7 +115,11 @@ For example, if you recommend a product with ID 12345, you must write: [PRODUCT:
       isTyping: true,
     );
 
-    if (_chatSession == null) {
+    // Reset to the primary fastest model for every new message
+    if (_currentModelIndex != 0) {
+      _currentModelIndex = 0;
+      _initChatSession(history: _chatSession?.history);
+    } else if (_chatSession == null) {
       _initChatSession();
     }
 
@@ -128,6 +137,36 @@ For example, if you recommend a product with ID 12345, you must write: [PRODUCT:
             ])
           : Content.text(text);
 
+      await _attemptSendMessage(content);
+    } catch (e) {
+      final eStr = e.toString();
+      String errorText =
+          "দুঃখিত, কোনো একটি সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।";
+
+      if (eStr.contains('Quota exceeded') || eStr.contains('429')) {
+        errorText =
+            "দুঃখিত, আপনি খুব দ্রুত মেসেজ দিচ্ছেন! গুগলের ফ্রি লিমিট অনুযায়ী দয়া করে ১০-১৫ সেকেন্ড অপেক্ষা করে আবার মেসেজ দিন।";
+      } else if (eStr.contains('high demand') || eStr.contains('503')) {
+        errorText =
+            "বর্তমানে সার্ভারে অনেক চাপ রয়েছে। দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।";
+      } else {
+        errorText = "Error: $eStr";
+      }
+
+      final errorMessage = ChatMessage(
+        text: errorText,
+        isUser: false,
+        timestamp: DateTime.now(),
+      );
+      state = state.copyWith(
+        messages: [...state.messages, errorMessage],
+        isTyping: false,
+      );
+    }
+  }
+
+  Future<void> _attemptSendMessage(Content content) async {
+    try {
       final stream = _chatSession!.sendMessageStream(content);
 
       var aiMessage = ChatMessage(
@@ -138,7 +177,6 @@ For example, if you recommend a product with ID 12345, you must write: [PRODUCT:
 
       bool isFirstChunk = true;
 
-      // Listen to the stream and update the message piece by piece
       await for (final chunk in stream) {
         if (chunk.text != null) {
           aiMessage = ChatMessage(
@@ -146,16 +184,14 @@ For example, if you recommend a product with ID 12345, you must write: [PRODUCT:
             isUser: false,
             timestamp: aiMessage.timestamp,
           );
-          
+
           if (isFirstChunk) {
-            // Add the first message and turn off typing indicator
             state = state.copyWith(
               messages: [...state.messages, aiMessage],
               isTyping: false,
             );
             isFirstChunk = false;
           } else {
-            // Update the last message in the list
             final updatedMessages = List<ChatMessage>.from(state.messages);
             updatedMessages[updatedMessages.length - 1] = aiMessage;
             state = state.copyWith(messages: updatedMessages);
@@ -163,15 +199,27 @@ For example, if you recommend a product with ID 12345, you must write: [PRODUCT:
         }
       }
     } catch (e) {
-      final errorMessage = ChatMessage(
-        text: "Error: ${e.toString()}",
-        isUser: false,
-        timestamp: DateTime.now(),
-      );
-      state = state.copyWith(
-        messages: [...state.messages, errorMessage],
-        isTyping: false,
-      );
+      final eStr = e.toString();
+      // If we encounter a rate limit or high demand error, and we have more models to try:
+      if ((eStr.contains('Quota exceeded') ||
+              eStr.contains('429') ||
+              eStr.contains('high demand') ||
+              eStr.contains('503')) &&
+          _currentModelIndex < _availableModels.length - 1) {
+        print(
+          "Model \${_availableModels[_currentModelIndex]} failed. Switching to next...",
+        );
+        _currentModelIndex++;
+
+        // Re-initialize with the new model but keep the old history
+        _initChatSession(history: _chatSession?.history);
+
+        // Retry
+        await _attemptSendMessage(content);
+      } else {
+        // No more models to try, or different error
+        rethrow;
+      }
     }
   }
 }
