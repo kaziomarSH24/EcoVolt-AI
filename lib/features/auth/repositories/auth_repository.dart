@@ -44,6 +44,14 @@ class AuthRepository {
     await _supabase.auth.signOut();
   }
 
+  // Send Password Reset Email
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    await _supabase.auth.resetPasswordForEmail(
+      email,
+      redirectTo: 'io.supabase.ecovoltai://reset-callback/',
+    );
+  }
+
   // Sign in with Google
   Future<bool> signInWithGoogle() async {
     return await _supabase.auth.signInWithOAuth(

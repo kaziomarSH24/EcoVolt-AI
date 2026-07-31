@@ -145,7 +145,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               return null;
                             },
                             labelSuffix: TextButton(
-                              onPressed: () {},
+                              onPressed: () => context.push('/forgot-password'),
                               style: TextButton.styleFrom(
                                 padding: EdgeInsets.zero,
                                 minimumSize: Size.zero,
