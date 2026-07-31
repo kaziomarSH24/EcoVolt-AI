@@ -1,16 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
 
 class ChatMessage {
   final String text;
   final bool isUser;
   final DateTime timestamp;
-  final Map<String, dynamic>? productData; // Generative UI payload
 
   ChatMessage({
     required this.text,
     required this.isUser,
     required this.timestamp,
-    this.productData,
   });
 }
 
@@ -35,17 +36,56 @@ class ChatState {
 }
 
 class ChatNotifier extends Notifier<ChatState> {
+  ChatSession? _chatSession;
+
   @override
   ChatState build() {
+    // Initial message
     return ChatState(
       messages: [
         ChatMessage(
-          text: "Hello! I am your EcoVolt AI Consultant. How can I help you optimize your power solutions today?",
+          text: "হ্যালো! আমি EcoVolt AI Consultant. আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি? আপনি চাইলে আপনার বাসার ফ্যান ও লাইটের হিসাব দিতে পারেন, আমি আপনার জন্য সঠিক সোলার বা আইপিএস সাজেস্ট করব!",
           isUser: false,
           timestamp: DateTime.now(),
         ),
       ],
     );
+  }
+
+  void _initChatSession() {
+    final apiKey = dotenv.env['GEMINI_API_KEY'];
+    if (apiKey == null || apiKey.isEmpty || apiKey == 'YOUR_GEMINI_API_KEY_HERE') {
+      print('Warning: Gemini API Key is missing or invalid.');
+      return;
+    }
+
+    final products = ref.read(productProvider).value ?? [];
+    final inventoryList = products.map((p) => '- Name: ${p.title} (Price: ${p.price}, ID: ${p.id})').join('\n');
+
+    final systemInstruction = '''
+You are EcoVolt AI Consultant, a friendly and knowledgeable power solutions assistant in Bangladesh.
+You help users calculate their power load (e.g. for fans, lights, appliances) and recommend Solar, IPS, Batteries, or Generators.
+You MUST communicate purely in Bengali.
+
+Here is the current inventory of products available in the EcoVolt app:
+$inventoryList
+
+IMPORTANT INSTRUCTIONS FOR RECOMMENDING PRODUCTS:
+1. Only recommend products from the inventory list above.
+2. If you recommend a specific product, you MUST format it exactly like this in your response:
+[PRODUCT:product_id_here]
+For example, if you recommend a product with ID 12345, you must write: [PRODUCT:12345]. 
+3. Do NOT use markdown links for products. ONLY use the exact [PRODUCT:id] syntax. The app will automatically convert this syntax into a beautiful UI card.
+4. Keep your responses concise, helpful, and friendly. Use bullet points for load calculations to make it easy to read.
+''';
+
+    final model = GenerativeModel(
+      model: 'gemini-1.5-flash',
+      apiKey: apiKey,
+      systemInstruction: Content.system(systemInstruction),
+    );
+
+    _chatSession = model.startChat();
   }
 
   Future<void> sendMessage(String text) async {
@@ -63,46 +103,38 @@ class ChatNotifier extends Notifier<ChatState> {
       isTyping: true,
     );
 
-    // Mock AI processing delay
-    await Future.delayed(const Duration(seconds: 2));
+    if (_chatSession == null) {
+      _initChatSession();
+    }
 
-    // Mock AI response
-    final aiResponse = _getMockResponse(text);
-    final aiMessage = ChatMessage(
-      text: aiResponse['text'],
-      isUser: false,
-      timestamp: DateTime.now(),
-      productData: aiResponse['productData'],
-    );
+    try {
+      if (_chatSession == null) {
+        throw Exception("API Key is missing. Please add your GEMINI_API_KEY to the .env file.");
+      }
 
-    state = state.copyWith(
-      messages: [...state.messages, aiMessage],
-      isTyping: false,
-    );
-  }
+      final response = await _chatSession!.sendMessage(Content.text(text));
+      final responseText = response.text ?? "দুঃখিত, আমি আপনার কথা বুঝতে পারিনি।";
 
-  Map<String, dynamic> _getMockResponse(String userText) {
-    final lower = userText.toLowerCase();
-    if (lower.contains('load') || lower.contains('fan') || lower.contains('light')) {
-      return {
-        'text': "Based on typical loads, a fan uses ~70W and a light uses ~15W. If you have 3 fans and 5 lights, your total load is around 285W. I recommend a 600VA IPS setup. Here is a great option for you:",
-        'productData': {
-          'title': 'EcoVolt 600VA Smart IPS',
-          'price': '৳120.00',
-          'imagePath': 'assets/images/ev1.png',
-          'specs': 'Backup: 4 Hours • Battery: 12V 100Ah',
-        }
-      };
-    } else if (lower.contains('solar') || lower.contains('save')) {
-      return {
-        'text': "Going solar can save you up to 80% on your monthly electricity bill! With a standard 1KW system, your Return on Investment (ROI) is typically achieved in just 3-4 years.",
-        'productData': null,
-      };
-    } else {
-      return {
-        'text': "That's a great question! I am still in training, but I can help you calculate your load, find the right battery capacity, or estimate solar savings. What would you like to do?",
-        'productData': null,
-      };
+      final aiMessage = ChatMessage(
+        text: responseText,
+        isUser: false,
+        timestamp: DateTime.now(),
+      );
+
+      state = state.copyWith(
+        messages: [...state.messages, aiMessage],
+        isTyping: false,
+      );
+    } catch (e) {
+      final errorMessage = ChatMessage(
+        text: "Error: ${e.toString()}",
+        isUser: false,
+        timestamp: DateTime.now(),
+      );
+      state = state.copyWith(
+        messages: [...state.messages, errorMessage],
+        isTyping: false,
+      );
     }
   }
 }

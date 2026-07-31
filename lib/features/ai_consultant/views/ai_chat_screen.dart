@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 import 'package:ecovolt_ai/features/ai_consultant/providers/chat_provider.dart';
+import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
+import 'package:ecovolt_ai/features/shop/models/product_model.dart';
 
 class AiChatScreen extends ConsumerStatefulWidget {
   const AiChatScreen({super.key});
@@ -193,20 +196,23 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   }
 }
 
-class _MessageBubble extends StatelessWidget {
+class _MessageBubble extends ConsumerWidget {
   final ChatMessage message;
 
   const _MessageBubble({required this.message});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final productsAsync = ref.watch(productProvider);
+    final products = productsAsync.value ?? [];
+
     return Align(
       alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
+          maxWidth: MediaQuery.of(context).size.width * 0.85,
         ),
         decoration: BoxDecoration(
           color: message.isUser ? AppColors.textPrimary : AppColors.primary.withValues(alpha: 0.1),
@@ -217,32 +223,102 @@ class _MessageBubble extends StatelessWidget {
             bottomRight: Radius.circular(message.isUser ? 4 : 20),
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              message.text,
-              style: TextStyle(
-                color: message.isUser ? Colors.white : AppColors.textPrimary,
-                fontSize: 15,
-                height: 1.4,
-              ),
-            ),
-            if (message.productData != null) ...[
-              const SizedBox(height: 12),
-              _buildProductCard(context, message.productData!),
-            ],
-          ],
-        ),
+        child: _buildMessageContent(context, products),
       ),
     );
   }
 
-  Widget _buildProductCard(BuildContext context, Map<String, dynamic> data) {
+  Widget _buildMessageContent(BuildContext context, List<ProductModel> products) {
+    if (message.isUser) {
+      return Text(
+        message.text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          height: 1.4,
+        ),
+      );
+    }
+
+    final productRegex = RegExp(r'\[PRODUCT:(.*?)\]');
+    final matches = productRegex.allMatches(message.text);
+    
+    if (matches.isEmpty) {
+      return MarkdownBody(
+        data: message.text,
+        styleSheet: MarkdownStyleSheet(
+          p: const TextStyle(color: AppColors.textPrimary, fontSize: 15, height: 1.4),
+          strong: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          listBullet: const TextStyle(color: AppColors.primary),
+        ),
+      );
+    }
+
+    List<Widget> children = [];
+    int lastMatchEnd = 0;
+
+    for (final match in matches) {
+      if (match.start > lastMatchEnd) {
+        final textBefore = message.text.substring(lastMatchEnd, match.start);
+        children.add(
+          MarkdownBody(
+            data: textBefore,
+            styleSheet: MarkdownStyleSheet(
+              p: const TextStyle(color: AppColors.textPrimary, fontSize: 15, height: 1.4),
+              strong: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            ),
+          ),
+        );
+        children.add(const SizedBox(height: 12));
+      }
+
+      final productId = match.group(1);
+      final product = products.where((p) => p.id == productId).firstOrNull;
+      
+      if (product != null) {
+        children.add(_buildRealProductCard(context, product));
+        children.add(const SizedBox(height: 12));
+      } else {
+        children.add(Text("Product not found: $productId", style: const TextStyle(color: Colors.red)));
+      }
+
+      lastMatchEnd = match.end;
+    }
+
+    if (lastMatchEnd < message.text.length) {
+      final textAfter = message.text.substring(lastMatchEnd);
+      if (textAfter.trim().isNotEmpty) {
+        children.add(
+          MarkdownBody(
+            data: textAfter,
+            styleSheet: MarkdownStyleSheet(
+              p: const TextStyle(color: AppColors.textPrimary, fontSize: 15, height: 1.4),
+              strong: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            ),
+          ),
+        );
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+
+  Widget _buildRealProductCard(BuildContext context, ProductModel product) {
     return GestureDetector(
       onTap: () {
-        // Navigate to product details and pass the product data map
-        context.push('/product-details', extra: data);
+        final productMap = {
+          'id': product.id,
+          'title': product.title,
+          'price': product.price,
+          'imagePath': product.imagePath,
+          'description': product.description,
+          'features': product.features,
+          'isBestSeller': product.isBestSeller,
+        };
+        context.push('/product-details', extra: productMap);
       },
       child: Container(
         width: double.infinity,
@@ -268,7 +344,12 @@ class _MessageBubble extends StatelessWidget {
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.solar_power_rounded, color: AppColors.primary, size: 30),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: product.imagePath.startsWith('http')
+                  ? Image.network(product.imagePath, fit: BoxFit.cover)
+                  : Image.asset(product.imagePath, fit: BoxFit.cover),
+              )
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -276,24 +357,18 @@ class _MessageBubble extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    data['title'],
+                    product.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                       fontSize: 14,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    data['specs'],
-                    style: TextStyle(
-                      color: AppColors.textSecondary.withValues(alpha: 0.8),
-                      fontSize: 11,
-                    ),
-                  ),
                   const SizedBox(height: 6),
                   Text(
-                    data['price'],
+                    product.price,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
@@ -310,6 +385,7 @@ class _MessageBubble extends StatelessWidget {
     );
   }
 }
+
 
 class _TypingIndicator extends StatelessWidget {
   const _TypingIndicator();
