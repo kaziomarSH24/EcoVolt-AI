@@ -3,15 +3,19 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
 
+import 'dart:typed_data';
+
 class ChatMessage {
   final String text;
   final bool isUser;
   final DateTime timestamp;
+  final Uint8List? imageBytes;
 
   ChatMessage({
     required this.text,
     required this.isUser,
     required this.timestamp,
+    this.imageBytes,
   });
 }
 
@@ -19,15 +23,9 @@ class ChatState {
   final List<ChatMessage> messages;
   final bool isTyping;
 
-  ChatState({
-    required this.messages,
-    this.isTyping = false,
-  });
+  ChatState({required this.messages, this.isTyping = false});
 
-  ChatState copyWith({
-    List<ChatMessage>? messages,
-    bool? isTyping,
-  }) {
+  ChatState copyWith({List<ChatMessage>? messages, bool? isTyping}) {
     return ChatState(
       messages: messages ?? this.messages,
       isTyping: isTyping ?? this.isTyping,
@@ -44,7 +42,8 @@ class ChatNotifier extends Notifier<ChatState> {
     return ChatState(
       messages: [
         ChatMessage(
-          text: "হ্যালো! আমি EcoVolt AI Consultant. আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি? আপনি চাইলে আপনার বাসার ফ্যান ও লাইটের হিসাব দিতে পারেন, আমি আপনার জন্য সঠিক সোলার বা আইপিএস সাজেস্ট করব!",
+          text:
+              "হ্যালো! আমি EcoVolt AI Consultant. আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি?\n\nআপনি চাইলে আমাকে নিচের তথ্যগুলো জানাতে পারেন:\n• আপনার বাসায় কয়টি ফ্যান, লাইট বা টিভি চলে?\n• আপনার বাজেট কত?\n• কতক্ষণ ব্যাকআপ চাচ্ছেন?\n\nতথ্যগুলো জানালে আমি আপনার জন্য সঠিক সোলার বা আইপিএস সাজেস্ট করব!",
           isUser: false,
           timestamp: DateTime.now(),
         ),
@@ -54,15 +53,20 @@ class ChatNotifier extends Notifier<ChatState> {
 
   void _initChatSession() {
     final apiKey = dotenv.env['GEMINI_API_KEY'];
-    if (apiKey == null || apiKey.isEmpty || apiKey == 'YOUR_GEMINI_API_KEY_HERE') {
+    if (apiKey == null ||
+        apiKey.isEmpty ||
+        apiKey == 'YOUR_GEMINI_API_KEY_HERE') {
       print('Warning: Gemini API Key is missing or invalid.');
       return;
     }
 
     final products = ref.read(productProvider).value ?? [];
-    final inventoryList = products.map((p) => '- Name: ${p.title} (Price: ${p.price}, ID: ${p.id})').join('\n');
+    final inventoryList = products
+        .map((p) => '- Name: ${p.title} (Price: ${p.price}, ID: ${p.id})')
+        .join('\n');
 
-    final systemInstruction = '''
+    final systemInstruction =
+        '''
 You are EcoVolt AI Consultant, a friendly and knowledgeable power solutions assistant in Bangladesh.
 You help users calculate their power load (e.g. for fans, lights, appliances) and recommend Solar, IPS, Batteries, or Generators.
 You MUST communicate purely in Bengali.
@@ -72,15 +76,16 @@ $inventoryList
 
 IMPORTANT INSTRUCTIONS FOR RECOMMENDING PRODUCTS:
 1. Only recommend products from the inventory list above.
-2. If you recommend a specific product, you MUST format it exactly like this in your response:
+2. If the user does not provide enough details (e.g., they just say "Hi" or "I need solar"), DO NOT just give a random list. Politely ASK THEM clarifying questions one by one (e.g., "আপনার বাসায় কয়টি ফ্যান ও লাইট চলবে?", "আপনার বাজেট কেমন?", "আপনার কি ব্যাকআপ বেশি প্রয়োজন?").
+3. If you recommend a specific product, you MUST format it exactly like this in your response:
 [PRODUCT:product_id_here]
 For example, if you recommend a product with ID 12345, you must write: [PRODUCT:12345]. 
-3. Do NOT use markdown links for products. ONLY use the exact [PRODUCT:id] syntax. The app will automatically convert this syntax into a beautiful UI card.
-4. Keep your responses concise, helpful, and friendly. Use bullet points for load calculations to make it easy to read.
+4. Do NOT use markdown links for products. ONLY use the exact [PRODUCT:id] syntax. The app will automatically convert this syntax into a beautiful UI card.
+5. Keep your responses concise, helpful, and friendly. Use bullet points for load calculations to make it easy to read.
 ''';
 
     final model = GenerativeModel(
-      model: 'gemini-1.5-flash-latest',
+      model: 'gemini-3.5-flash',
       apiKey: apiKey,
       systemInstruction: Content.system(systemInstruction),
     );
@@ -88,16 +93,17 @@ For example, if you recommend a product with ID 12345, you must write: [PRODUCT:
     _chatSession = model.startChat();
   }
 
-  Future<void> sendMessage(String text) async {
-    if (text.trim().isEmpty) return;
+  Future<void> sendMessage(String text, {Uint8List? imageBytes}) async {
+    if (text.trim().isEmpty && imageBytes == null) return;
 
     // Add user message
     final userMessage = ChatMessage(
       text: text,
       isUser: true,
       timestamp: DateTime.now(),
+      imageBytes: imageBytes,
     );
-    
+
     state = state.copyWith(
       messages: [...state.messages, userMessage],
       isTyping: true,
@@ -109,11 +115,21 @@ For example, if you recommend a product with ID 12345, you must write: [PRODUCT:
 
     try {
       if (_chatSession == null) {
-        throw Exception("API Key is missing. Please add your GEMINI_API_KEY to the .env file.");
+        throw Exception(
+          "API Key is missing. Please add your GEMINI_API_KEY to the .env file.",
+        );
       }
 
-      final response = await _chatSession!.sendMessage(Content.text(text));
-      final responseText = response.text ?? "দুঃখিত, আমি আপনার কথা বুঝতে পারিনি।";
+      final content = imageBytes != null
+          ? Content.multi([
+              TextPart(text.isNotEmpty ? text : "Describe this image"),
+              DataPart('image/jpeg', imageBytes),
+            ])
+          : Content.text(text);
+
+      final response = await _chatSession!.sendMessage(content);
+      final responseText =
+          response.text ?? "দুঃখিত, আমি আপনার কথা বুঝতে পারিনি।";
 
       final aiMessage = ChatMessage(
         text: responseText,

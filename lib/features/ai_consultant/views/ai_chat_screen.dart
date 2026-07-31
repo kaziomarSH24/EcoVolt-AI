@@ -5,6 +5,8 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 import 'package:ecovolt_ai/features/ai_consultant/providers/chat_provider.dart';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
 import 'package:ecovolt_ai/features/shop/providers/product_provider.dart';
 import 'package:ecovolt_ai/features/shop/models/product_model.dart';
 
@@ -18,6 +20,18 @@ class AiChatScreen extends ConsumerStatefulWidget {
 class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  Uint8List? _selectedImage;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
+      setState(() {
+        _selectedImage = bytes;
+      });
+    }
+  }
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
@@ -55,6 +69,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
               },
             ),
           ),
+          _buildSuggestionChips(),
           _buildInputArea(),
         ],
       ),
@@ -116,6 +131,38 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     );
   }
 
+  Widget _buildSuggestionChips() {
+    final suggestions = [
+      "৩টি ফ্যান ও ২টি লাইট আছে",
+      "১ লাখ টাকার মধ্যে ভালো আইপিএস",
+      "সোলার প্যানেল লাগাতে চাই",
+      "কোন ব্যাটারি ভালো হবে?",
+    ];
+
+    return Container(
+      height: 40,
+      margin: const EdgeInsets.only(bottom: 8, top: 4),
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        scrollDirection: Axis.horizontal,
+        itemCount: suggestions.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final text = suggestions[index];
+          return ActionChip(
+            label: Text(text, style: const TextStyle(fontSize: 13, color: AppColors.primary)),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+            side: BorderSide.none,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            onPressed: () {
+              _textController.text = text;
+            },
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildInputArea() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -131,16 +178,60 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
+        child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+            if (_selectedImage != null)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Stack(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      height: 80,
+                      width: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        image: DecorationImage(
+                          image: MemoryImage(_selectedImage!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedImage = null;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, color: Colors.white, size: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: const Icon(Icons.mic_none_rounded, color: AppColors.textSecondary),
+            Row(
+              children: [
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                ),
+                child: const Icon(Icons.photo_library_rounded, color: AppColors.textSecondary),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -153,12 +244,14 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
                 ),
                 child: TextField(
                   controller: _textController,
+                  minLines: 1,
+                  maxLines: 5,
+                  keyboardType: TextInputType.multiline,
                   decoration: InputDecoration(
                     hintText: 'Ask about solar, IPS, loads...',
                     hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
                     border: InputBorder.none,
                   ),
-                  onSubmitted: (_) => _handleSend(),
                 ),
               ),
             ),
@@ -176,15 +269,20 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
             ),
           ],
         ),
+          ],
+        ),
       ),
     );
   }
 
   void _handleSend() {
     final text = _textController.text;
-    if (text.isNotEmpty) {
-      ref.read(chatProvider.notifier).sendMessage(text);
+    if (text.isNotEmpty || _selectedImage != null) {
+      ref.read(chatProvider.notifier).sendMessage(text, imageBytes: _selectedImage);
       _textController.clear();
+      setState(() {
+        _selectedImage = null;
+      });
     }
   }
 
@@ -230,13 +328,32 @@ class _MessageBubble extends ConsumerWidget {
 
   Widget _buildMessageContent(BuildContext context, List<ProductModel> products) {
     if (message.isUser) {
-      return Text(
-        message.text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 15,
-          height: 1.4,
-        ),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (message.imageBytes != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              height: 120,
+              width: 120,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                image: DecorationImage(
+                  image: MemoryImage(message.imageBytes!),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          if (message.text.isNotEmpty)
+            Text(
+              message.text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                height: 1.4,
+              ),
+            ),
+        ],
       );
     }
 
