@@ -84,7 +84,7 @@ class CategoriesScreen extends ConsumerWidget {
     final iconColor = IconHelper.getColorFromHex(iconColorHex, fallback: Colors.green);
 
     return GestureDetector(
-      onTap: () => context.push('/catalog', extra: title),
+      onTap: () => context.push('/products', extra: title),
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,

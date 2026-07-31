@@ -350,7 +350,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Padding(
                     padding: const EdgeInsets.only(right: 12.0),
                     child: GestureDetector(
-                      onTap: () => context.push('/catalog', extra: 'All'),
+                      onTap: () => context.push('/products', extra: 'All'),
                       child: const _CategoryPill(
                         icon: Icons.grid_view_rounded,
                         label: 'All',
@@ -362,7 +362,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     return Padding(
                       padding: const EdgeInsets.only(right: 12.0),
                       child: GestureDetector(
-                        onTap: () => context.push('/catalog', extra: cat.name),
+                        onTap: () => context.push('/products', extra: cat.name),
                         child: _CategoryPill(
                           icon: IconHelper.getIcon(cat.iconName),
                           label: cat.name,
