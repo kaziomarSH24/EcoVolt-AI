@@ -364,7 +364,9 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
 
   void _onAddToCartClick(GlobalKey widgetKey) async {
     // 1. Trigger Animation
-    await runAddToCartAnimation(widgetKey);
+    if (widgetKey.currentContext != null) {
+      await runAddToCartAnimation(widgetKey);
+    }
 
     // 2. Add to Provider State
     final priceString = widget.product['price'].toString();
@@ -375,7 +377,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
         .read(cartProvider.notifier)
         .addToCart(
           CartItem(
-            productId: widget.product['id'],
+            productId: widget.product['id'] ?? widget.product['title'],
             title: widget.product['title'],
             price: parsedPrice,
             imagePath: widget.product['imagePath'],

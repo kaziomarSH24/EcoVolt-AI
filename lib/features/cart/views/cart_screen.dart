@@ -83,7 +83,9 @@ class CartScreen extends ConsumerWidget {
                           color: AppColors.background,
                           borderRadius: BorderRadius.circular(12),
                           image: DecorationImage(
-                            image: AssetImage(item.imagePath),
+                            image: item.imagePath.startsWith('http')
+                                ? NetworkImage(item.imagePath) as ImageProvider
+                                : AssetImage(item.imagePath),
                             fit: BoxFit.cover,
                           ),
                         ),
