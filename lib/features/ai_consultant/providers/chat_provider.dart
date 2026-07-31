@@ -80,7 +80,7 @@ For example, if you recommend a product with ID 12345, you must write: [PRODUCT:
 ''';
 
     final model = GenerativeModel(
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-latest',
       apiKey: apiKey,
       systemInstruction: Content.system(systemInstruction),
     );
