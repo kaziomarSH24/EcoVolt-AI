@@ -18,3 +18,17 @@ final currentUserProvider = Provider<User?>((ref) {
   final authState = ref.watch(authStateProvider).value;
   return authState?.session?.user ?? Supabase.instance.client.auth.currentUser;
 });
+
+// Provider to track if the user is in a password recovery flow
+class PasswordRecoveryNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setRecovery(bool value) {
+    state = value;
+  }
+}
+
+final passwordRecoveryProvider = NotifierProvider<PasswordRecoveryNotifier, bool>(() {
+  return PasswordRecoveryNotifier();
+});

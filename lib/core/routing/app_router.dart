@@ -27,13 +27,21 @@ import 'package:ecovolt_ai/features/auth/providers/auth_provider.dart';
 import 'package:ecovolt_ai/features/auth/views/otp_verify_screen.dart';
 import 'package:ecovolt_ai/features/auth/views/signup_screen.dart';
 import 'package:ecovolt_ai/features/auth/views/forgot_password_screen.dart';
+import 'package:ecovolt_ai/features/auth/views/update_password_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Create a notifier that triggers when auth state changes
 class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
 
   RouterNotifier(this._ref) {
-    _ref.listen(authStateProvider, (_, _) => notifyListeners());
+    _ref.listen(authStateProvider, (_, state) {
+      final authState = state.value;
+      if (authState?.event == AuthChangeEvent.passwordRecovery) {
+        _ref.read(passwordRecoveryProvider.notifier).setRecovery(true);
+      }
+      notifyListeners();
+    });
   }
 }
 
@@ -45,13 +53,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     redirect: (context, state) {
       final isLoggedIn = Supabase.instance.client.auth.currentUser != null;
+      final isPasswordRecovery = ref.read(passwordRecoveryProvider);
+      
       final isLoggingIn = state.matchedLocation == '/login' || state.matchedLocation == '/signup' || state.matchedLocation == '/forgot-password';
       final isOtpVerifying = state.matchedLocation == '/otp-verify';
+      final isUpdatingPassword = state.matchedLocation == '/update-password';
+
+      if (isPasswordRecovery && !isUpdatingPassword) {
+        return '/update-password';
+      }
 
       if (!isLoggedIn && !isLoggingIn && !isOtpVerifying && state.matchedLocation != '/') {
         return '/login';
       }
-      if (isLoggedIn && (isLoggingIn || isOtpVerifying)) {
+      if (isLoggedIn && !isPasswordRecovery && (isLoggingIn || isOtpVerifying)) {
         return '/home';
       }
       return null;
@@ -72,6 +87,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/forgot-password',
         builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/update-password',
+        builder: (context, state) => const UpdatePasswordScreen(),
       ),
       GoRoute(
         path: '/otp-verify',
