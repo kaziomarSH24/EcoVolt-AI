@@ -51,7 +51,6 @@ dependencies:
   flutter_native_splash: any
   google_generative_ai: ^0.4.7
   flutter_markdown: ^0.7.7+1
-  super_clipboard: ^0.9.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

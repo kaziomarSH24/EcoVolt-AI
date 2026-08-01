@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter/services.dart';
-import 'package:super_clipboard/super_clipboard.dart';
 import 'package:ecovolt_ai/core/theme/app_colors.dart';
 import 'package:ecovolt_ai/core/widgets/bouncy_button.dart';
 import 'package:ecovolt_ai/features/ai_consultant/providers/chat_provider.dart';
@@ -39,37 +38,10 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
               return KeyEventResult.handled;
             }
           }
-          if (event.logicalKey == LogicalKeyboardKey.keyV &&
-              (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed)) {
-            _handlePaste();
-            return KeyEventResult.ignored;
-          }
         }
         return KeyEventResult.ignored;
       },
     );
-  }
-
-  Future<void> _handlePaste() async {
-    final clipboard = SystemClipboard.instance;
-    if (clipboard == null) return;
-    
-    final reader = await clipboard.read();
-    if (reader.canProvide(Formats.jpeg)) {
-      reader.getFile(Formats.jpeg, (file) async {
-        final bytes = await file.readAll();
-        setState(() {
-          _selectedImage = bytes;
-        });
-      });
-    } else if (reader.canProvide(Formats.png)) {
-      reader.getFile(Formats.png, (file) async {
-        final bytes = await file.readAll();
-        setState(() {
-          _selectedImage = bytes;
-        });
-      });
-    }
   }
 
   @override
