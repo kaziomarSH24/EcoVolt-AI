@@ -10,6 +10,8 @@ import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
 import 'package:ecovolt_ai/features/shop/providers/category_provider.dart';
 import 'package:ecovolt_ai/features/shop/models/product_model.dart';
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ProductCatalogScreen extends ConsumerStatefulWidget {
   final String categoryName;
@@ -318,7 +320,27 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
           ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Row(
+          children: List.generate(5, (index) => Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Shimmer.fromColors(
+              baseColor: Colors.grey[200]!,
+              highlightColor: Colors.grey[100]!,
+              child: Container(
+                width: 100,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+              ),
+            ),
+          )),
+        ),
+      ),
       error: (e, st) => const SizedBox.shrink(),
     );
   }
@@ -360,11 +382,33 @@ class _ProductCatalogScreenState extends ConsumerState<ProductCatalogScreen> {
                     isBestSeller: product.isBestSeller,
                     index: index,
                     onAddToCartClick: (key) => runAddToCartAnimation(key),
-                  );
+                  ).animate().fade(duration: 400.ms, delay: (index * 100).ms).scaleXY(begin: 0.9, end: 1.0, curve: Curves.easeOutBack);
                 },
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => GridView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.65,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 24,
+              ),
+              itemCount: 4,
+              itemBuilder: (context, index) {
+                return Shimmer.fromColors(
+                  baseColor: Colors.grey[200]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                );
+              },
+            ),
             error: (e, st) => Center(child: Text('Error: $e')),
           ),
         ),

@@ -13,6 +13,8 @@ import 'package:ecovolt_ai/features/shop/providers/favorite_provider.dart';
 import 'package:ecovolt_ai/utils/icon_helper.dart';
 import 'package:ecovolt_ai/features/shop/models/product_model.dart';
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -77,10 +79,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildHeroSection(context),
-                        _buildCategoriesSection(context, ref),
+                        _buildHeroSection(context).animate().fade(duration: 500.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutQuad),
+                        _buildCategoriesSection(context, ref).animate().fade(duration: 500.ms, delay: 150.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutQuad),
                         const SizedBox(height: 32),
-                        _buildPopularProductsSection(context, ref),
+                        _buildPopularProductsSection(context, ref).animate().fade(duration: 500.ms, delay: 300.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutQuad),
                         const SizedBox(height: 120), // padding for bottom nav
                       ],
                     ),
@@ -375,7 +377,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Row(
+              children: List.generate(5, (index) => Padding(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: Shimmer.fromColors(
+                  baseColor: Colors.grey[200]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Container(
+                    width: 100,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                  ),
+                ),
+              )),
+            ),
+          ),
           error: (err, stack) => const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Text('Error loading categories')),
         ),
       ],
@@ -429,7 +451,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Row(
+              children: List.generate(3, (index) => Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: Shimmer.fromColors(
+                  baseColor: Colors.grey[200]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Container(
+                    width: 220,
+                    height: 280,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                ),
+              )),
+            ),
+          ),
           error: (err, stack) => const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Text('Error loading products')),
         ),
       ],
